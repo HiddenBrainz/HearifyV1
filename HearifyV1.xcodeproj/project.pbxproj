@@ -1,0 +1,666 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0D7DDC482F280D230088C400 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0D7DDC472F280D230088C400 /* FirebaseAuth */; };
+		0D7DDC4A2F280D230088C400 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0D7DDC492F280D230088C400 /* FirebaseCore */; };
+		0D7DDC4C2F280D230088C400 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0D7DDC4B2F280D230088C400 /* FirebaseFirestore */; };
+		0D7DDC502F2825BF0088C400 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0D7DDC4F2F2825BF0088C400 /* GoogleService-Info.plist */; };
+		0D7DE14F2F294D1A0088C400 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0D7DE14E2F294D1A0088C400 /* FirebaseStorage */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0DDB00302E8C53F700E80AEE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0DDB00162E8C53F600E80AEE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0DDB001D2E8C53F600E80AEE;
+			remoteInfo = HearifyV1;
+		};
+		0DDB003A2E8C53F700E80AEE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0DDB00162E8C53F600E80AEE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0DDB001D2E8C53F600E80AEE;
+			remoteInfo = HearifyV1;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0D7DDC4F2F2825BF0088C400 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		0DDB001E2E8C53F600E80AEE /* HearifyV1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HearifyV1.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0DDB002F2E8C53F700E80AEE /* HearifyV1Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HearifyV1Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0DDB00392E8C53F700E80AEE /* HearifyV1UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HearifyV1UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0D639AD82EA5879100CA3224 /* Exceptions for "HearifyV1" folder in "HearifyV1" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 0DDB001D2E8C53F600E80AEE /* HearifyV1 */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		0DDB00202E8C53F600E80AEE /* HearifyV1 */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0D639AD82EA5879100CA3224 /* Exceptions for "HearifyV1" folder in "HearifyV1" target */,
+			);
+			path = HearifyV1;
+			sourceTree = "<group>";
+		};
+		0DDB00322E8C53F700E80AEE /* HearifyV1Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = HearifyV1Tests;
+			sourceTree = "<group>";
+		};
+		0DDB003C2E8C53F700E80AEE /* HearifyV1UITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = HearifyV1UITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0DDB001B2E8C53F600E80AEE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D7DDC4A2F280D230088C400 /* FirebaseCore in Frameworks */,
+				0D7DE14F2F294D1A0088C400 /* FirebaseStorage in Frameworks */,
+				0D7DDC482F280D230088C400 /* FirebaseAuth in Frameworks */,
+				0D7DDC4C2F280D230088C400 /* FirebaseFirestore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0DDB002C2E8C53F700E80AEE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0DDB00362E8C53F700E80AEE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0D7DDC462F280D230088C400 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		0DDB00152E8C53F600E80AEE = {
+			isa = PBXGroup;
+			children = (
+				0DDB00202E8C53F600E80AEE /* HearifyV1 */,
+				0DDB00322E8C53F700E80AEE /* HearifyV1Tests */,
+				0DDB003C2E8C53F700E80AEE /* HearifyV1UITests */,
+				0D7DDC462F280D230088C400 /* Frameworks */,
+				0DDB001F2E8C53F600E80AEE /* Products */,
+				0D7DDC4F2F2825BF0088C400 /* GoogleService-Info.plist */,
+			);
+			sourceTree = "<group>";
+		};
+		0DDB001F2E8C53F600E80AEE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0DDB001E2E8C53F600E80AEE /* HearifyV1.app */,
+				0DDB002F2E8C53F700E80AEE /* HearifyV1Tests.xctest */,
+				0DDB00392E8C53F700E80AEE /* HearifyV1UITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0DDB001D2E8C53F600E80AEE /* HearifyV1 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0DDB00432E8C53F700E80AEE /* Build configuration list for PBXNativeTarget "HearifyV1" */;
+			buildPhases = (
+				0DDB001A2E8C53F600E80AEE /* Sources */,
+				0DDB001B2E8C53F600E80AEE /* Frameworks */,
+				0DDB001C2E8C53F600E80AEE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				0DDB00202E8C53F600E80AEE /* HearifyV1 */,
+			);
+			name = HearifyV1;
+			packageProductDependencies = (
+				0D7DDC472F280D230088C400 /* FirebaseAuth */,
+				0D7DDC492F280D230088C400 /* FirebaseCore */,
+				0D7DDC4B2F280D230088C400 /* FirebaseFirestore */,
+				0D7DE14E2F294D1A0088C400 /* FirebaseStorage */,
+			);
+			productName = HearifyV1;
+			productReference = 0DDB001E2E8C53F600E80AEE /* HearifyV1.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0DDB002E2E8C53F700E80AEE /* HearifyV1Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0DDB00462E8C53F700E80AEE /* Build configuration list for PBXNativeTarget "HearifyV1Tests" */;
+			buildPhases = (
+				0DDB002B2E8C53F700E80AEE /* Sources */,
+				0DDB002C2E8C53F700E80AEE /* Frameworks */,
+				0DDB002D2E8C53F700E80AEE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0DDB00312E8C53F700E80AEE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0DDB00322E8C53F700E80AEE /* HearifyV1Tests */,
+			);
+			name = HearifyV1Tests;
+			packageProductDependencies = (
+			);
+			productName = HearifyV1Tests;
+			productReference = 0DDB002F2E8C53F700E80AEE /* HearifyV1Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		0DDB00382E8C53F700E80AEE /* HearifyV1UITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0DDB00492E8C53F700E80AEE /* Build configuration list for PBXNativeTarget "HearifyV1UITests" */;
+			buildPhases = (
+				0DDB00352E8C53F700E80AEE /* Sources */,
+				0DDB00362E8C53F700E80AEE /* Frameworks */,
+				0DDB00372E8C53F700E80AEE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0DDB003B2E8C53F700E80AEE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0DDB003C2E8C53F700E80AEE /* HearifyV1UITests */,
+			);
+			name = HearifyV1UITests;
+			packageProductDependencies = (
+			);
+			productName = HearifyV1UITests;
+			productReference = 0DDB00392E8C53F700E80AEE /* HearifyV1UITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0DDB00162E8C53F600E80AEE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					0DDB001D2E8C53F600E80AEE = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					0DDB002E2E8C53F700E80AEE = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 0DDB001D2E8C53F600E80AEE;
+					};
+					0DDB00382E8C53F700E80AEE = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 0DDB001D2E8C53F600E80AEE;
+					};
+				};
+			};
+			buildConfigurationList = 0DDB00192E8C53F600E80AEE /* Build configuration list for PBXProject "HearifyV1" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 0DDB00152E8C53F600E80AEE;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0D7DD7472F28073E0088C400 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 0DDB001F2E8C53F600E80AEE /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0DDB001D2E8C53F600E80AEE /* HearifyV1 */,
+				0DDB002E2E8C53F700E80AEE /* HearifyV1Tests */,
+				0DDB00382E8C53F700E80AEE /* HearifyV1UITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0DDB001C2E8C53F600E80AEE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D7DDC502F2825BF0088C400 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0DDB002D2E8C53F700E80AEE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0DDB00372E8C53F700E80AEE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0DDB001A2E8C53F600E80AEE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0DDB002B2E8C53F700E80AEE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0DDB00352E8C53F700E80AEE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0DDB00312E8C53F700E80AEE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0DDB001D2E8C53F600E80AEE /* HearifyV1 */;
+			targetProxy = 0DDB00302E8C53F700E80AEE /* PBXContainerItemProxy */;
+		};
+		0DDB003B2E8C53F700E80AEE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0DDB001D2E8C53F600E80AEE /* HearifyV1 */;
+			targetProxy = 0DDB003A2E8C53F700E80AEE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0DDB00412E8C53F700E80AEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		0DDB00422E8C53F700E80AEE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		0DDB00442E8C53F700E80AEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = HearifyV1/HearifyV1.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1.2;
+				DEVELOPMENT_ASSET_PATHS = "\"HearifyV1/Preview Content\"";
+				DEVELOPMENT_TEAM = H79TUQ5672;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HearifyV1/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Hearify;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Hearify uses the camera to analyze your mouth position in real-time and provide visual feedback on pronunciation articulation.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Hearify needs microphone access to record your speech for pronunciation analysis and speaking practice exercises.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Hearify needs permission to save your practice videos to your photo library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Hearify needs photo library access to save your practice recordings for later review.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Hearify needs access to speech recognition to analyze your pronunciation and provide feedback on your speaking skills.";
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = VeerChopra.HearifyV1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		0DDB00452E8C53F700E80AEE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = HearifyV1/HearifyV1.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1.2;
+				DEVELOPMENT_ASSET_PATHS = "\"HearifyV1/Preview Content\"";
+				DEVELOPMENT_TEAM = H79TUQ5672;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HearifyV1/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Hearify;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Hearify uses the camera to analyze your mouth position in real-time and provide visual feedback on pronunciation articulation.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Hearify needs microphone access to record your speech for pronunciation analysis and speaking practice exercises.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Hearify needs permission to save your practice videos to your photo library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Hearify needs photo library access to save your practice recordings for later review.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Hearify needs access to speech recognition to analyze your pronunciation and provide feedback on your speaking skills.";
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = VeerChopra.HearifyV1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		0DDB00472E8C53F700E80AEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H79TUQ5672;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = VeerChopra.HearifyV1Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HearifyV1.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HearifyV1";
+			};
+			name = Debug;
+		};
+		0DDB00482E8C53F700E80AEE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H79TUQ5672;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = VeerChopra.HearifyV1Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HearifyV1.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HearifyV1";
+			};
+			name = Release;
+		};
+		0DDB004A2E8C53F700E80AEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H79TUQ5672;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = VeerChopra.HearifyV1UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = HearifyV1;
+			};
+			name = Debug;
+		};
+		0DDB004B2E8C53F700E80AEE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H79TUQ5672;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = VeerChopra.HearifyV1UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = HearifyV1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0DDB00192E8C53F600E80AEE /* Build configuration list for PBXProject "HearifyV1" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0DDB00412E8C53F700E80AEE /* Debug */,
+				0DDB00422E8C53F700E80AEE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0DDB00432E8C53F700E80AEE /* Build configuration list for PBXNativeTarget "HearifyV1" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0DDB00442E8C53F700E80AEE /* Debug */,
+				0DDB00452E8C53F700E80AEE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0DDB00462E8C53F700E80AEE /* Build configuration list for PBXNativeTarget "HearifyV1Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0DDB00472E8C53F700E80AEE /* Debug */,
+				0DDB00482E8C53F700E80AEE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0DDB00492E8C53F700E80AEE /* Build configuration list for PBXNativeTarget "HearifyV1UITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0DDB004A2E8C53F700E80AEE /* Debug */,
+				0DDB004B2E8C53F700E80AEE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0D7DD7472F28073E0088C400 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0D7DDC472F280D230088C400 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0D7DD7472F28073E0088C400 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		0D7DDC492F280D230088C400 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0D7DD7472F28073E0088C400 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		0D7DDC4B2F280D230088C400 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0D7DD7472F28073E0088C400 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		0D7DE14E2F294D1A0088C400 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0D7DD7472F28073E0088C400 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 0DDB00162E8C53F600E80AEE /* Project object */;
+}
