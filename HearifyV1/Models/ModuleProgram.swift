@@ -32,7 +32,245 @@ struct ProgramPhase: Identifiable {
 
 // MARK: - Module Programs
 extension ModuleProgram {
-    // Module 1: Hearing Training
+    // Get customized Module 1 based on hearing type
+    static func module1(for hearingType: TrainingModuleType) -> ModuleProgram {
+        switch hearingType {
+        case .hearingLoss:
+            return module1HearingLoss
+        case .hearingAids:
+            return module1HearingAids
+        case .cochlearImplants:
+            return module1CochlearImplants
+        }
+    }
+
+    // Module 1 for Hearing Loss users
+    private static let module1HearingLoss = ModuleProgram(
+        moduleNumber: 1,
+        moduleName: "Hearing Training - Understanding Your Hearing",
+        icon: "ear.fill",
+        description: "Comprehensive program to improve listening skills while learning about hearing loss, its causes, and management strategies. Build your understanding alongside practical training.",
+        objectives: [
+            "Understand different types of hearing loss and their impacts",
+            "Improve word recognition accuracy to 85%+",
+            "Master discrimination of similar-sounding word pairs",
+            "Develop sentence comprehension skills in quiet and noise",
+            "Learn about hearing protection and management",
+            "Track progress and identify specific challenges"
+        ],
+        structure: [
+            ProgramPhase(
+                phaseNumber: 1,
+                title: "Understanding Hearing Loss + Foundation Training",
+                description: "Learn about hearing loss basics while starting phoneme discrimination training",
+                exercises: [
+                    "Educational: Types of hearing loss and their causes",
+                    "Educational: How hearing loss affects communication",
+                    "Matched Pairs - Phonetics: Distinguish minimal pairs",
+                    "Matched Pairs - Vowels: Master vowel contrasts",
+                    "Educational Quiz: Test your hearing loss knowledge"
+                ],
+                duration: "1-2 weeks, 20 minutes daily",
+                successCriteria: "Complete educational modules and achieve 80% accuracy on matched pairs"
+            ),
+            ProgramPhase(
+                phaseNumber: 2,
+                title: "Communication Strategies + Word Recognition",
+                description: "Learn effective communication strategies while practicing word and sentence recognition",
+                exercises: [
+                    "Educational: Communication strategies for hearing loss",
+                    "Educational: Working with audiologists",
+                    "Word Recognition: Identify spoken words",
+                    "Sentence Comprehension: Practice full sentences",
+                    "My Practice List: Build custom practice materials"
+                ],
+                duration: "2-3 weeks, 25 minutes daily",
+                successCriteria: "Understand key strategies and maintain 85%+ accuracy"
+            ),
+            ProgramPhase(
+                phaseNumber: 3,
+                title: "Real-World Listening + Environmental Awareness",
+                description: "Practice listening in noise while learning about challenging listening environments",
+                exercises: [
+                    "Educational: Managing difficult listening situations",
+                    "Educational: Hearing protection and preservation",
+                    "Sentences in Noise: Progressive noise training",
+                    "Diagnostic Test: Track your progress",
+                    "Educational Quiz: Environmental awareness"
+                ],
+                duration: "3-4 weeks, 30 minutes daily",
+                successCriteria: "Achieve 70%+ accuracy in noise and complete educational content"
+            )
+        ],
+        tips: [
+            "Review educational content before each training session",
+            "Practice in quiet initially, gradually add background noise",
+            "Apply communication strategies you learn in daily life",
+            "Share your progress with your audiologist",
+            "Use Practice List for words you encounter in daily conversations",
+            "Take breaks if you feel auditory fatigue",
+            "Review educational quizzes to reinforce learning"
+        ],
+        estimatedDuration: "6-8 weeks for complete program"
+    )
+
+    // Module 1 for Hearing Aid users
+    private static let module1HearingAids = ModuleProgram(
+        moduleNumber: 1,
+        moduleName: "Hearing Training - Optimizing Your Hearing Aids",
+        icon: "ear.badge.waveform",
+        description: "Comprehensive training program combined with hearing aid education. Learn to maximize your hearing aid benefits while improving listening skills.",
+        objectives: [
+            "Master hearing aid use, maintenance, and optimization",
+            "Adapt to amplified sound and improve word recognition",
+            "Learn troubleshooting and care techniques",
+            "Develop listening skills in various environments",
+            "Understand hearing aid features and settings",
+            "Build confidence with your devices"
+        ],
+        structure: [
+            ProgramPhase(
+                phaseNumber: 1,
+                title: "Hearing Aid Basics + Initial Training",
+                description: "Learn hearing aid fundamentals while beginning auditory training",
+                exercises: [
+                    "Educational: Getting started with hearing aids",
+                    "Educational: Daily maintenance and care",
+                    "Matched Pairs: Adapt to amplified sounds",
+                    "Word Recognition: Practice with your hearing aids",
+                    "Educational Quiz: Hearing aid knowledge check"
+                ],
+                duration: "1-2 weeks, 20 minutes daily",
+                successCriteria: "Complete care training and achieve 80% accuracy"
+            ),
+            ProgramPhase(
+                phaseNumber: 2,
+                title: "Advanced Features + Comprehension",
+                description: "Master hearing aid features while improving sentence comprehension",
+                exercises: [
+                    "Educational: Understanding hearing aid programs and settings",
+                    "Educational: Using telecoil and wireless features",
+                    "Sentence Comprehension: Practice with different programs",
+                    "Diagnostic Test: Assess performance with aids",
+                    "Educational: Troubleshooting common issues"
+                ],
+                duration: "2-3 weeks, 25 minutes daily",
+                successCriteria: "Use advanced features confidently and maintain 85%+ accuracy"
+            ),
+            ProgramPhase(
+                phaseNumber: 3,
+                title: "Real-World Optimization + Noise Training",
+                description: "Optimize settings for different environments while training in noise",
+                exercises: [
+                    "Educational: Adjusting for different environments",
+                    "Educational: Working with your audiologist for adjustments",
+                    "Sentences in Noise: Test different programs and settings",
+                    "Custom Practice: Focus on challenging listening situations",
+                    "Educational: Long-term care and maintenance"
+                ],
+                duration: "3-4 weeks, 30 minutes daily",
+                successCriteria: "Optimize aids for various settings and achieve 70%+ accuracy in noise"
+            )
+        ],
+        tips: [
+            "Wear your hearing aids during all training sessions",
+            "Start with your everyday program, then try other settings",
+            "Practice cleaning and maintenance daily",
+            "Keep spare batteries or charge regularly",
+            "Note which settings work best in different situations",
+            "Discuss training results with your audiologist",
+            "Review troubleshooting guides when needed"
+        ],
+        estimatedDuration: "6-8 weeks for complete program"
+    )
+
+    // Module 1 for Cochlear Implant users
+    private static let module1CochlearImplants = ModuleProgram(
+        moduleNumber: 1,
+        moduleName: "Hearing Training - Cochlear Implant Rehabilitation",
+        icon: "cpu",
+        description: "Specialized auditory rehabilitation program for cochlear implant users. Develop listening skills with your implant while learning about device function and care.",
+        objectives: [
+            "Understand cochlear implant function and components",
+            "Adapt to electrical hearing and sound processing",
+            "Master device care and troubleshooting",
+            "Develop word and sentence recognition skills",
+            "Learn about mapping and programming",
+            "Build confidence in various listening environments"
+        ],
+        structure: [
+            ProgramPhase(
+                phaseNumber: 1,
+                title: "CI Fundamentals + Sound Awareness",
+                description: "Learn implant basics while beginning sound awareness training",
+                exercises: [
+                    "Educational: How your cochlear implant works",
+                    "Educational: Daily care and equipment management",
+                    "Sound Awareness: Adapt to electrical hearing",
+                    "Matched Pairs: Environmental sound discrimination",
+                    "Educational Quiz: CI knowledge assessment"
+                ],
+                duration: "2-3 weeks, 25 minutes daily",
+                successCriteria: "Complete care training and show sound awareness progress"
+            ),
+            ProgramPhase(
+                phaseNumber: 2,
+                title: "Speech Understanding + Device Optimization",
+                description: "Develop speech recognition while learning about programming and mapping",
+                exercises: [
+                    "Educational: Understanding mapping and programming",
+                    "Educational: Troubleshooting and accessories",
+                    "Word Recognition: Build speech understanding",
+                    "Sentence Comprehension: Progress to full sentences",
+                    "Educational: Working with your CI audiologist"
+                ],
+                duration: "3-4 weeks, 30 minutes daily",
+                successCriteria: "Achieve consistent word recognition and understand mapping process"
+            ),
+            ProgramPhase(
+                phaseNumber: 3,
+                title: "Complex Listening + Advanced Strategies",
+                description: "Master challenging listening situations and advanced device features",
+                exercises: [
+                    "Educational: Advanced features and wireless connectivity",
+                    "Educational: Strategies for difficult listening environments",
+                    "Sentences in Noise: Progressive noise training",
+                    "Diagnostic Test: Track rehabilitation progress",
+                    "Educational: Long-term care and upgrades"
+                ],
+                duration: "4-6 weeks, 30-35 minutes daily",
+                successCriteria: "Show improvement in noise and master device features"
+            ),
+            ProgramPhase(
+                phaseNumber: 4,
+                title: "Maintenance + Ongoing Rehabilitation",
+                description: "Continue skill development and learn ongoing care strategies",
+                exercises: [
+                    "Educational: Lifelong device management",
+                    "Advanced Sentence Training: Complex materials",
+                    "Practice in Various Environments: Real-world testing",
+                    "Educational: Music appreciation with CI",
+                    "Continuous Progress Tracking"
+                ],
+                duration: "Ongoing practice recommended",
+                successCriteria: "Demonstrate consistent performance and independence"
+            )
+        ],
+        tips: [
+            "Wear your processor during all training sessions",
+            "Start with shorter sessions and gradually increase duration",
+            "Keep equipment clean and check connections daily",
+            "Maintain backup equipment and batteries",
+            "Note any sound quality changes to discuss at mappings",
+            "Practice in various environments beyond training",
+            "Be patient - CI rehabilitation is a journey",
+            "Attend all mapping appointments",
+            "Review educational content regularly"
+        ],
+        estimatedDuration: "12-16 weeks for initial program, ongoing practice for continued improvement"
+    )
+
+    // Original Module 1 (default/fallback)
     static let module1 = ModuleProgram(
         moduleNumber: 1,
         moduleName: "Hearing Training",

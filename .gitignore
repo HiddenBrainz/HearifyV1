@@ -1,0 +1,21 @@
+# Build logs
+build_*.log
+
+# Backup files
+*.backup
+
+# Xcode user-specific files
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+
+# Mac
+.DS_Store
+
+# Swift Package Manager
+.build/
+Packages/
+*.xcworkspace
+
+# CocoaPods
+Pods/

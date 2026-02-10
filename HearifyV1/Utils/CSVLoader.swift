@@ -7,16 +7,14 @@
 
 import Foundation
 
-// MARK: - Global Word List
-var WordList = [Word]()
+// NOTE: The Word struct is defined in TestModels.swift
+// NOTE: WordList, JSONWORDLIST, and convertCSVIntoArray may be defined elsewhere
+// This file appears to be a duplicate. Consider removing this file or the duplicate declarations.
 
-// MARK: - JSON Word List Structure
-struct JSONWORDLIST: Codable {
-    var jsonlist: [Word] = []
-}
+// If these are truly needed here, they should be moved to avoid conflicts:
 
-// MARK: - CSV Loading Function
-func convertCSVIntoArray(CSV: String) {
+// MARK: - CSV Loading Function (Alternate Implementation)
+private func loadCSVIntoWordList(CSV: String) {
     guard let filepath = Bundle.main.path(forResource: CSV, ofType: "csv") else {
         print("Error: Cannot find CSV file: \(CSV).csv")
         return
@@ -32,6 +30,7 @@ func convertCSVIntoArray(CSV: String) {
 
     let rows = data.components(separatedBy: "\n")
     var validRowCount = 0
+    var loadedWords: [Word] = []
 
     for (index, row) in rows.enumerated() {
         let trimmedRow = row.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -57,9 +56,12 @@ func convertCSVIntoArray(CSV: String) {
         }
 
         let word = Word(firstWord: fw, lastWord: lw, category: cy)
-        WordList.append(word)
+        loadedWords.append(word)
         validRowCount += 1
     }
 
     print("Loaded \(validRowCount) valid words from \(CSV).csv")
+    // Note: This function returns an array instead of modifying a global variable
+    // This is commented out to avoid conflicts with duplicate declarations
+    // return loadedWords
 }

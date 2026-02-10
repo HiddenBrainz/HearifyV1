@@ -4,19 +4,30 @@
 //
 //  Daily challenge system models
 //
+// IMPORTANT: DifficultyLevel, ChartDataPoint, and DailyProgressData 
+// are defined in CommonModels.swift - DO NOT redefine them here!
 
 import Foundation
 
-// MARK: - Challenge Type
+// MARK: - Challenge Type  
 enum ChallengeType: String, CaseIterable, Codable {
     case speedChallenge = "Speed Challenge"
     case accuracyChallenge = "Accuracy Challenge"
     case enduranceChallenge = "Endurance Challenge"
     case mixedChallenge = "Mixed Challenge"
+    
+    var icon: String {
+        switch self {
+        case .speedChallenge: return "bolt.fill"
+        case .accuracyChallenge: return "target"
+        case .enduranceChallenge: return "infinity"
+        case .mixedChallenge: return "shuffle"
+        }
+    }
 }
 
 // MARK: - Daily Challenge
-struct DailyChallenge: Codable {
+struct DailyChallenge: Codable, Identifiable {
     let id: String
     let type: ChallengeType
     let title: String
@@ -25,7 +36,7 @@ struct DailyChallenge: Codable {
     let timeLimit: TimeInterval?
     let wordCount: Int
     let category: String
-    let difficulty: DifficultyLevel
+    let difficulty: DifficultyLevel  // Uses DifficultyLevel from CommonModels.swift
     let bonusPoints: Int
     let date: Date
 
@@ -97,3 +108,59 @@ struct DailyChallenge: Codable {
         }
     }
 }
+// MARK: - Challenge Result
+struct ChallengeResult: Codable, Identifiable {
+    let id: UUID
+    let challengeId: String
+    let completionDate: Date
+    let accuracy: Double
+    let timeSpent: TimeInterval
+    let wordsCompleted: Int
+    let pointsEarned: Int
+    let isSuccessful: Bool
+    
+    init(id: UUID = UUID(), challengeId: String, completionDate: Date = Date(), accuracy: Double, timeSpent: TimeInterval, wordsCompleted: Int, pointsEarned: Int, isSuccessful: Bool) {
+        self.id = id
+        self.challengeId = challengeId
+        self.completionDate = completionDate
+        self.accuracy = accuracy
+        self.timeSpent = timeSpent
+        self.wordsCompleted = wordsCompleted
+        self.pointsEarned = pointsEarned
+        self.isSuccessful = isSuccessful
+    }
+}
+
+// MARK: - Challenge Progress
+struct ChallengeProgress: Codable {
+    var currentWordIndex: Int
+    var correctAnswers: Int
+    var incorrectAnswers: Int
+    var startTime: Date
+    var endTime: Date?
+    
+    var totalAttempts: Int {
+        correctAnswers + incorrectAnswers
+    }
+    
+    var accuracy: Double {
+        guard totalAttempts > 0 else { return 0.0 }
+        return Double(correctAnswers) / Double(totalAttempts)
+    }
+    
+    var timeElapsed: TimeInterval {
+        if let end = endTime {
+            return end.timeIntervalSince(startTime)
+        }
+        return Date().timeIntervalSince(startTime)
+    }
+    
+    init(currentWordIndex: Int = 0, correctAnswers: Int = 0, incorrectAnswers: Int = 0, startTime: Date = Date(), endTime: Date? = nil) {
+        self.currentWordIndex = currentWordIndex
+        self.correctAnswers = correctAnswers
+        self.incorrectAnswers = incorrectAnswers
+        self.startTime = startTime
+        self.endTime = endTime
+    }
+}
+

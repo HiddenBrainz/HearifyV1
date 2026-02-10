@@ -1427,7 +1427,7 @@ extension UserDefaults {
 */
 
 // EXTRACTED TO: Utils/CSVLoader.swift
-/*
+// Keeping these here as they're still used in ContentView
 var WordList = [Word]()
 struct JSONWORDLIST: Codable {
     var jsonlist = [Word]()
@@ -1480,7 +1480,6 @@ func convertCSVIntoArray(CSV: String) {
 
     print("Loaded \(validRowCount) valid words from \(CSV).csv")
 }
-*/
 
 // EXTRACTED TO: Views/Components/ResponsiveHeadings.swift
 /*
@@ -2082,7 +2081,8 @@ struct ContentView: View {
     @ObservedObject private var analyticsManager = AnalyticsManager.shared
     @EnvironmentObject private var firebase: FirebaseManager
     @State private var showSignOutAlert = false
-    
+    @State private var showingMissedWords: Bool = true // For stats display toggle
+
     // Module Program state
     @State private var selectedModuleProgram: ModuleProgram? = nil
     
@@ -5071,7 +5071,6 @@ struct ContentView: View {
                 }
             }
         }
-    }
 
     func addWordToPracticeList() {
             let newWord = Word(
@@ -13691,996 +13690,958 @@ struct ContentView: View {
                 .id(customItemsRefreshTrigger) // Force refresh when items are deleted
             }
         }
-        
-        // Custom Words Section with Selection
-        @ViewBuilder
-        func customWordsSection(customWords: [DemoWord], layout: ResponsiveLayoutHelper) -> some View {
-            ModernCard(padding: AppTheme.spacingL) {
-                VStack(alignment: .leading, spacing: AppTheme.spacingM) {
-                    // Header with Select and Add buttons
-                    HStack {
-                        Image(systemName: "textformat.size")
-                            .foregroundColor(AppTheme.success)
-                        Text("Custom Words")
-                            .font(.system(size: layout.bodyFontSize + 2, weight: .semibold))
-                            .foregroundColor(AppTheme.textPrimary)
-                        Spacer()
-                        
-                        if isCustomWordsSelectionMode && !selectedCustomWordIndices.isEmpty {
-                            Text("\(selectedCustomWordIndices.count) selected")
-                                .font(.system(size: 14))
-                                .foregroundColor(AppTheme.accentOrange)
-                        } else if !customWords.isEmpty {
-                            Text("\(customWords.count) items")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(AppTheme.textSecondary)
-                        }
-                        
-                        // Add button (green plus)
-                        Button(action: {
-                            uploadType = .words
-                            showCustomUploadSheet = true
-                        }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(AppTheme.success)
-                        }
-                        
-                        // Select button
-                        if !customWords.isEmpty {
-                            Button(action: {
-                                isCustomWordsSelectionMode.toggle()
-                                if !isCustomWordsSelectionMode {
-                                    selectedCustomWordIndices.removeAll()
-                                }
-                            }) {
-                                Text(isCustomWordsSelectionMode ? "Cancel" : "Select")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(AppTheme.primaryBlue)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(AppTheme.primaryBlue.opacity(0.1))
-                                    .cornerRadius(8)
-                            }
-                        }
-                    }
-                    
-                    if customWords.isEmpty {
-                        Text("No custom words uploaded yet")
-                            .font(.system(size: 14))
-                            .foregroundColor(AppTheme.textSecondary)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppTheme.backgroundSecondary)
-                            .cornerRadius(8)
-                    } else {
-                        // List of words
-                        LazyVStack(spacing: AppTheme.spacingS) {
-                            ForEach(Array(customWords.enumerated()), id: \.offset) { index, word in
-                                customWordRow(word: word, index: index, layout: layout)
-                            }
-                        }
-                        
-                        // Actions
-                        if isCustomWordsSelectionMode && !selectedCustomWordIndices.isEmpty {
-                            VStack(spacing: AppTheme.spacingS) {
-                                ResponsiveButton(
-                                    text: "Practice Selected (\(selectedCustomWordIndices.count))",
-                                    action: {
-                                        let selectedWords = customWords.enumerated().filter { selectedCustomWordIndices.contains($0.offset) }.map { $0.element }
-                                        startCustomWordsPractice(customWords: selectedWords)
-                                        isCustomWordsSelectionMode = false
-                                        selectedCustomWordIndices.removeAll()
-                                    },
-                                    layout: layout,
-                                    style: .success,
-                                    icon: "play.fill"
-                                )
-                                
-                                Button(action: {
-                                    deleteSelectedCustomWords(selectedIndices: Array(selectedCustomWordIndices))
-                                }) {
-                                    HStack {
-                                        Image(systemName: "trash.fill")
-                                        Text("Delete Selected")
-                                    }
-                                    .font(.system(size: layout.bodyFontSize, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(Color.red)
-                                    .cornerRadius(8)
-                                }
-                            }
-                        } else if !isCustomWordsSelectionMode {
-                            ResponsiveButton(
-                                text: "Practice All Words",
-                                action: {
-                                    startCustomWordsPractice(customWords: customWords)
-                                },
-                                layout: layout,
-                                style: .primary,
-                                icon: "play.fill"
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        
-        @ViewBuilder
-        func customWordRow(word: DemoWord, index: Int, layout: ResponsiveLayoutHelper) -> some View {
-            HStack(spacing: AppTheme.spacingS) {
-                if isCustomWordsSelectionMode {
-                    Button(action: {
-                        if selectedCustomWordIndices.contains(index) {
-                            selectedCustomWordIndices.remove(index)
-                        } else {
-                            selectedCustomWordIndices.insert(index)
-                        }
-                    }) {
-                        Image(systemName: selectedCustomWordIndices.contains(index) ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 24))
-                            .foregroundColor(selectedCustomWordIndices.contains(index) ? AppTheme.success : AppTheme.textSecondary)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(word.word)
-                        .font(.system(size: layout.bodyFontSize, weight: .medium))
+    }
+
+    // Custom Words Section with Selection
+    @ViewBuilder
+    func customWordsSection(customWords: [DemoWord], layout: ResponsiveLayoutHelper) -> some View {
+        ModernCard(padding: AppTheme.spacingL) {
+            VStack(alignment: .leading, spacing: AppTheme.spacingM) {
+                // Header with Select and Add buttons
+                HStack {
+                    Image(systemName: "textformat.size")
+                        .foregroundColor(AppTheme.success)
+                    Text("Custom Words")
+                        .font(.system(size: layout.bodyFontSize + 2, weight: .semibold))
                         .foregroundColor(AppTheme.textPrimary)
-                }
-                
-                Spacer()
-                
-                if !isCustomWordsSelectionMode {
-                    Button(action: {
-                        deleteCustomWord(at: index)
-                    }) {
-                        Image(systemName: "trash")
+                    Spacer()
+                    
+                    if isCustomWordsSelectionMode && !selectedCustomWordIndices.isEmpty {
+                        Text("\(selectedCustomWordIndices.count) selected")
                             .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.red)
-                            .cornerRadius(6)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-            .padding(AppTheme.spacingM)
-            .background(
-                isCustomWordsSelectionMode && selectedCustomWordIndices.contains(index)
-                ? AppTheme.primaryBlue.opacity(0.1)
-                : AppTheme.backgroundSecondary
-            )
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
-                        isCustomWordsSelectionMode && selectedCustomWordIndices.contains(index)
-                        ? AppTheme.primaryBlue
-                        : Color.clear,
-                        lineWidth: 2
-                    )
-            )
-        }
-        
-        // Custom Sentences Section
-        @ViewBuilder
-        func customSentencesSection(customSentences: [DemoSentence], layout: ResponsiveLayoutHelper) -> some View {
-            ModernCard(padding: AppTheme.spacingL) {
-                VStack(alignment: .leading, spacing: AppTheme.spacingM) {
-                    // Header with Select and Add buttons
-                    HStack {
-                        Image(systemName: "quote.bubble")
                             .foregroundColor(AppTheme.accentOrange)
-                        Text("Custom Sentences")
-                            .font(.system(size: layout.bodyFontSize + 2, weight: .semibold))
-                            .foregroundColor(AppTheme.textPrimary)
-                        Spacer()
-                        
-                        if isCustomSentencesSelectionMode && !selectedCustomSentenceIndices.isEmpty {
-                            Text("\(selectedCustomSentenceIndices.count) selected")
-                                .font(.system(size: 14))
-                                .foregroundColor(AppTheme.accentOrange)
-                        } else if !customSentences.isEmpty {
-                            Text("\(customSentences.count) items")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(AppTheme.textSecondary)
-                        }
-                        
-                        // Add button (green plus)
-                        Button(action: {
-                            uploadType = .sentences
-                            showCustomUploadSheet = true
-                        }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(AppTheme.success)
-                        }
-                        
-                        // Select button
-                        if !customSentences.isEmpty {
-                            Button(action: {
-                                isCustomSentencesSelectionMode.toggle()
-                                if !isCustomSentencesSelectionMode {
-                                    selectedCustomSentenceIndices.removeAll()
-                                }
-                            }) {
-                                Text(isCustomSentencesSelectionMode ? "Cancel" : "Select")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(AppTheme.primaryBlue)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(AppTheme.primaryBlue.opacity(0.1))
-                                    .cornerRadius(8)
-                            }
-                        }
-                    }
-                    
-                    if customSentences.isEmpty {
-                        Text("No custom sentences uploaded yet")
-                            .font(.system(size: 14))
+                    } else if !customWords.isEmpty {
+                        Text("\(customWords.count) items")
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(AppTheme.textSecondary)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppTheme.backgroundSecondary)
-                            .cornerRadius(8)
-                    } else {
-                        LazyVStack(spacing: AppTheme.spacingS) {
-                            ForEach(Array(customSentences.enumerated()), id: \.offset) { index, sentence in
-                                customSentenceRow(sentence: sentence, index: index, layout: layout)
-                            }
-                        }
-                        
-                        if isCustomSentencesSelectionMode && !selectedCustomSentenceIndices.isEmpty {
-                            VStack(spacing: AppTheme.spacingS) {
-                                ResponsiveButton(
-                                    text: "Practice Selected (\(selectedCustomSentenceIndices.count))",
-                                    action: {
-                                        let selectedSentences = customSentences.enumerated().filter { selectedCustomSentenceIndices.contains($0.offset) }.map { $0.element }
-                                        startCustomSentencesPractice(customSentences: selectedSentences)
-                                        isCustomSentencesSelectionMode = false
-                                        selectedCustomSentenceIndices.removeAll()
-                                    },
-                                    layout: layout,
-                                    style: .success,
-                                    icon: "play.fill"
-                                )
-                                
-                                Button(action: {
-                                    deleteSelectedCustomSentences(selectedIndices: Array(selectedCustomSentenceIndices))
-                                }) {
-                                    HStack {
-                                        Image(systemName: "trash.fill")
-                                        Text("Delete Selected")
-                                    }
-                                    .font(.system(size: layout.bodyFontSize, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(Color.red)
-                                    .cornerRadius(8)
-                                }
-                            }
-                        } else if !isCustomSentencesSelectionMode {
-                            ResponsiveButton(
-                                text: "Practice All Sentences",
-                                action: {
-                                    startCustomSentencesPractice(customSentences: customSentences)
-                                },
-                                layout: layout,
-                                style: .primary,
-                                icon: "play.fill"
-                            )
-                        }
                     }
-                }
-            }
-        }
-        
-        @ViewBuilder
-        func customSentenceRow(sentence: DemoSentence, index: Int, layout: ResponsiveLayoutHelper) -> some View {
-            HStack(spacing: AppTheme.spacingS) {
-                if isCustomSentencesSelectionMode {
+                    
+                    // Add button (green plus)
                     Button(action: {
-                        if selectedCustomSentenceIndices.contains(index) {
-                            selectedCustomSentenceIndices.remove(index)
-                        } else {
-                            selectedCustomSentenceIndices.insert(index)
-                        }
+                        uploadType = .words
+                        showCustomUploadSheet = true
                     }) {
-                        Image(systemName: selectedCustomSentenceIndices.contains(index) ? "checkmark.circle.fill" : "circle")
+                        Image(systemName: "plus.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(selectedCustomSentenceIndices.contains(index) ? AppTheme.success : AppTheme.textSecondary)
+                            .foregroundColor(AppTheme.success)
                     }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(sentence.sentence)
-                        .font(.system(size: layout.bodyFontSize, weight: .medium))
-                        .foregroundColor(AppTheme.textPrimary)
-                        .lineLimit(2)
-                }
-                
-                Spacer()
-                
-                if !isCustomSentencesSelectionMode {
-                    Button(action: {
-                        deleteCustomSentence(at: index)
-                    }) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.red)
-                            .cornerRadius(6)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-            .padding(AppTheme.spacingM)
-            .background(
-                isCustomSentencesSelectionMode && selectedCustomSentenceIndices.contains(index)
-                ? AppTheme.primaryBlue.opacity(0.1)
-                : AppTheme.backgroundSecondary
-            )
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
-                        isCustomSentencesSelectionMode && selectedCustomSentenceIndices.contains(index)
-                        ? AppTheme.primaryBlue
-                        : Color.clear,
-                        lineWidth: 2
-                    )
-            )
-        }
-        
-        // Custom Matched Pairs Section
-        @ViewBuilder
-        func customMatchedPairsSection(customMatchedPairs: [Word], layout: ResponsiveLayoutHelper) -> some View {
-            ModernCard(padding: AppTheme.spacingL) {
-                VStack(alignment: .leading, spacing: AppTheme.spacingM) {
-                    // Header with Select and Add buttons
-                    HStack {
-                        Image(systemName: "square.grid.2x2")
-                            .foregroundColor(AppTheme.primaryBlue)
-                        Text("Custom Matched Pairs")
-                            .font(.system(size: layout.bodyFontSize + 2, weight: .semibold))
-                            .foregroundColor(AppTheme.textPrimary)
-                        Spacer()
-                        
-                        if isCustomMatchedPairsSelectionMode && !selectedCustomMatchedPairIndices.isEmpty {
-                            Text("\(selectedCustomMatchedPairIndices.count) selected")
-                                .font(.system(size: 14))
-                                .foregroundColor(AppTheme.accentOrange)
-                        } else if !customMatchedPairs.isEmpty {
-                            Text("\(customMatchedPairs.count) items")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(AppTheme.textSecondary)
-                        }
-                        
-                        // Add button (green plus)
+                    
+                    // Select button
+                    if !customWords.isEmpty {
                         Button(action: {
-                            uploadType = .matchedPairs
-                            showCustomUploadSheet = true
+                            isCustomWordsSelectionMode.toggle()
+                            if !isCustomWordsSelectionMode {
+                                selectedCustomWordIndices.removeAll()
+                            }
                         }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(AppTheme.success)
-                        }
-                        
-                        // Select button
-                        if !customMatchedPairs.isEmpty {
-                            Button(action: {
-                                isCustomMatchedPairsSelectionMode.toggle()
-                                if !isCustomMatchedPairsSelectionMode {
-                                    selectedCustomMatchedPairIndices.removeAll()
-                                }
-                            }) {
-                                Text(isCustomMatchedPairsSelectionMode ? "Cancel" : "Select")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(AppTheme.primaryBlue)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(AppTheme.primaryBlue.opacity(0.1))
-                                    .cornerRadius(8)
-                            }
+                            Text(isCustomWordsSelectionMode ? "Cancel" : "Select")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(AppTheme.primaryBlue)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(AppTheme.primaryBlue.opacity(0.1))
+                                .cornerRadius(8)
                         }
                     }
-                    
-                    if customMatchedPairs.isEmpty {
-                        Text("No custom matched pairs uploaded yet")
-                            .font(.system(size: 14))
-                            .foregroundColor(AppTheme.textSecondary)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppTheme.backgroundSecondary)
-                            .cornerRadius(8)
-                    } else {
-                        LazyVStack(spacing: AppTheme.spacingS) {
-                            ForEach(Array(customMatchedPairs.enumerated()), id: \.offset) { index, pair in
-                                customMatchedPairRow(pair: pair, index: index, layout: layout)
-                            }
-                        }
-                        
-                        if isCustomMatchedPairsSelectionMode && !selectedCustomMatchedPairIndices.isEmpty {
-                            VStack(spacing: AppTheme.spacingS) {
-                                ResponsiveButton(
-                                    text: "Practice Selected (\(selectedCustomMatchedPairIndices.count))",
-                                    action: {
-                                        let selectedPairs = customMatchedPairs.enumerated().filter { selectedCustomMatchedPairIndices.contains($0.offset) }.map { $0.element }
-                                        startCustomMatchedPairsPractice(customMatchedPairs: selectedPairs)
-                                        isCustomMatchedPairsSelectionMode = false
-                                        selectedCustomMatchedPairIndices.removeAll()
-                                    },
-                                    layout: layout,
-                                    style: .success,
-                                    icon: "play.fill"
-                                )
-                                
-                                Button(action: {
-                                    deleteSelectedCustomMatchedPairs(selectedIndices: Array(selectedCustomMatchedPairIndices))
-                                }) {
-                                    HStack {
-                                        Image(systemName: "trash.fill")
-                                        Text("Delete Selected")
-                                    }
-                                    .font(.system(size: layout.bodyFontSize, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(Color.red)
-                                    .cornerRadius(8)
-                                }
-                            }
-                        } else if !isCustomMatchedPairsSelectionMode {
-                            ResponsiveButton(
-                                text: "Practice All Matched Pairs",
-                                action: {
-                                    startCustomMatchedPairsPractice(customMatchedPairs: customMatchedPairs)
-                                },
-                                layout: layout,
-                                style: .primary,
-                                icon: "play.fill"
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        
-        @ViewBuilder
-        func customMatchedPairRow(pair: Word, index: Int, layout: ResponsiveLayoutHelper) -> some View {
-            HStack(spacing: AppTheme.spacingS) {
-                if isCustomMatchedPairsSelectionMode {
-                    Button(action: {
-                        if selectedCustomMatchedPairIndices.contains(index) {
-                            selectedCustomMatchedPairIndices.remove(index)
-                        } else {
-                            selectedCustomMatchedPairIndices.insert(index)
-                        }
-                    }) {
-                        Image(systemName: selectedCustomMatchedPairIndices.contains(index) ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 24))
-                            .foregroundColor(selectedCustomMatchedPairIndices.contains(index) ? AppTheme.success : AppTheme.textSecondary)
-                    }
-                    .buttonStyle(PlainButtonStyle())
                 }
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(pair.firstWord) vs \(pair.lastWord)")
-                        .font(.system(size: layout.bodyFontSize, weight: .medium))
-                        .foregroundColor(AppTheme.textPrimary)
-                }
-                
-                Spacer()
-                
-                if !isCustomMatchedPairsSelectionMode {
-                    Button(action: {
-                        deleteCustomMatchedPair(at: index)
-                    }) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.red)
-                            .cornerRadius(6)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-            .padding(AppTheme.spacingM)
-            .background(
-                isCustomMatchedPairsSelectionMode && selectedCustomMatchedPairIndices.contains(index)
-                ? AppTheme.primaryBlue.opacity(0.1)
-                : AppTheme.backgroundSecondary
-            )
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
-                        isCustomMatchedPairsSelectionMode && selectedCustomMatchedPairIndices.contains(index)
-                        ? AppTheme.primaryBlue
-                        : Color.clear,
-                        lineWidth: 2
-                    )
-            )
-        }
-        
-        // MARK: - Custom Item Management Functions
-        
-        func deleteCustomWord(at index: Int) {
-            guard var customWords = loadCustomWords() else { return }
-            guard index >= 0 && index < customWords.count else {
-                print("⚠️ Invalid index \(index) for customWords array of size \(customWords.count)")
-                return
-            }
-            customWords.remove(at: index)
-            saveCustomWords(customWords)
-            customItemsRefreshTrigger = UUID() // Force view refresh
-            print("✅ Deleted custom word at index \(index)")
-        }
-        
-        func deleteCustomSentence(at index: Int) {
-            guard var customSentences = loadCustomSentences() else { return }
-            guard index >= 0 && index < customSentences.count else {
-                print("⚠️ Invalid index \(index) for customSentences array of size \(customSentences.count)")
-                return
-            }
-            customSentences.remove(at: index)
-            saveCustomSentences(customSentences)
-            customItemsRefreshTrigger = UUID() // Force view refresh
-            print("✅ Deleted custom sentence at index \(index)")
-        }
-        
-        func deleteSelectedCustomWords(selectedIndices: [Int]) {
-            guard var customWords = loadCustomWords() else { return }
-            let sortedIndices = selectedIndices.sorted(by: >)
-            for index in sortedIndices {
-                if index >= 0 && index < customWords.count {
-                    customWords.remove(at: index)
-                }
-            }
-            saveCustomWords(customWords)
-            selectedCustomWordIndices.removeAll()
-            isCustomWordsSelectionMode = false
-            customItemsRefreshTrigger = UUID() // Force view refresh
-            print("✅ Deleted \(sortedIndices.count) custom words")
-        }
-        
-        func deleteSelectedCustomSentences(selectedIndices: [Int]) {
-            guard var customSentences = loadCustomSentences() else { return }
-            let sortedIndices = selectedIndices.sorted(by: >)
-            for index in sortedIndices {
-                if index >= 0 && index < customSentences.count {
-                    customSentences.remove(at: index)
-                }
-            }
-            saveCustomSentences(customSentences)
-            selectedCustomSentenceIndices.removeAll()
-            isCustomSentencesSelectionMode = false
-            customItemsRefreshTrigger = UUID() // Force view refresh
-            print("✅ Deleted \(sortedIndices.count) custom sentences")
-        }
-        
-        func loadCustomWords() -> [DemoWord]? {
-            guard let data = UserDefaults.standard.data(forKey: "customWords"),
-                  let words = try? JSONDecoder().decode([DemoWord].self, from: data) else {
-                return nil
-            }
-            return words
-        }
-        
-        func loadCustomSentences() -> [DemoSentence]? {
-            guard let data = UserDefaults.standard.data(forKey: "customSentences"),
-                  let sentences = try? JSONDecoder().decode([DemoSentence].self, from: data) else {
-                return nil
-            }
-            return sentences
-        }
-        
-        func saveCustomWords(_ words: [DemoWord]) {
-            if let encoded = try? JSONEncoder().encode(words) {
-                UserDefaults.standard.set(encoded, forKey: "customWords")
-            }
-        }
-        
-        func saveCustomSentences(_ sentences: [DemoSentence]) {
-            if let encoded = try? JSONEncoder().encode(sentences) {
-                UserDefaults.standard.set(encoded, forKey: "customSentences")
-            }
-        }
-        
-        func loadCustomMatchedPairs() -> [Word]? {
-            guard let data = UserDefaults.standard.data(forKey: "customMatchedPairs"),
-                  let pairs = try? JSONDecoder().decode([Word].self, from: data) else {
-                return nil
-            }
-            return pairs
-        }
-        
-        func saveCustomMatchedPairs(_ pairs: [Word]) {
-            if let encoded = try? JSONEncoder().encode(pairs) {
-                UserDefaults.standard.set(encoded, forKey: "customMatchedPairs")
-            }
-        }
-        
-        func deleteCustomMatchedPair(at index: Int) {
-            guard var customMatchedPairs = loadCustomMatchedPairs() else { return }
-            guard index >= 0 && index < customMatchedPairs.count else {
-                print("⚠️ Invalid index \(index) for customMatchedPairs array of size \(customMatchedPairs.count)")
-                return
-            }
-            customMatchedPairs.remove(at: index)
-            saveCustomMatchedPairs(customMatchedPairs)
-            customItemsRefreshTrigger = UUID() // Force view refresh
-            print("✅ Deleted custom matched pair at index \(index)")
-        }
-        
-        func deleteSelectedCustomMatchedPairs(selectedIndices: [Int]) {
-            guard var customMatchedPairs = loadCustomMatchedPairs() else { return }
-            let sortedIndices = selectedIndices.sorted(by: >)
-            for index in sortedIndices {
-                if index >= 0 && index < customMatchedPairs.count {
-                    customMatchedPairs.remove(at: index)
-                }
-            }
-            saveCustomMatchedPairs(customMatchedPairs)
-            selectedCustomMatchedPairIndices.removeAll()
-            isCustomMatchedPairsSelectionMode = false
-            customItemsRefreshTrigger = UUID() // Force view refresh
-            print("✅ Deleted \(sortedIndices.count) custom matched pairs")
-        }
-        
-        // Clear all custom data
-        func clearAllCustomData() {
-            UserDefaults.standard.removeObject(forKey: "customWords")
-            UserDefaults.standard.removeObject(forKey: "customSentences")
-            UserDefaults.standard.removeObject(forKey: "customMatchedPairs")
-            selectedCustomWordIndices.removeAll()
-            selectedCustomSentenceIndices.removeAll()
-            selectedCustomMatchedPairIndices.removeAll()
-            isCustomWordsSelectionMode = false
-            isCustomSentencesSelectionMode = false
-            isCustomMatchedPairsSelectionMode = false
-            customItemsRefreshTrigger = UUID() // Force view refresh
-            print("✅ Cleared all custom words and sentences")
-        }
-        
-        // MARK: - Helper Views
-        
-        @ViewBuilder
-        func choiceButton(choice: String, layout: ResponsiveLayoutHelper) -> some View {
-            let isSelected = userAnswer == choice
-            let correctAnswer = getCurrentCorrectAnswer()
-            let isCorrectChoice = choice == correctAnswer
-            
-            // Determine colors based on feedback state
-            let backgroundColor: Color = {
-                if showingFeedback && isSelected {
-                    return isAnswerCorrect ? Color.green : Color.red
-                } else if isSelected {
-                    return AppTheme.accentOrange
-                } else if showingFeedback && isCorrectChoice {
-                    return Color.green.opacity(0.3)
-                } else {
-                    return AppTheme.backgroundSecondary
-                }
-            }()
-            
-            let textColor: Color = {
-                if showingFeedback && (isSelected || isCorrectChoice) {
-                    return .white
-                } else if isSelected {
-                    return .white
-                } else {
-                    return AppTheme.textPrimary
-                }
-            }()
-            
-            let borderColor: Color = {
-                if showingFeedback && isSelected {
-                    return isAnswerCorrect ? Color.green : Color.red
-                } else if isSelected {
-                    return AppTheme.accentOrange
-                } else if showingFeedback && isCorrectChoice {
-                    return Color.green
-                } else {
-                    return AppTheme.textTertiary.opacity(0.3)
-                }
-            }()
-            
-            Button(action: {
-                handleChoiceSelection(choice)
-            }) {
-                HStack {
-                    Text(choice)
-                        .font(.system(size: layout.bodyFontSize, weight: .medium))
-                        .foregroundColor(textColor)
-                    
-                    Spacer()
-                    
-                    // Show checkmark or X icon when feedback is showing
-                    if showingFeedback && isSelected {
-                        Image(systemName: isAnswerCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                            .foregroundColor(.white)
-                            .font(.system(size: 20))
-                    } else if showingFeedback && isCorrectChoice && !isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.white)
-                            .font(.system(size: 20))
-                    }
-                }
-                .padding(.horizontal, AppTheme.spacingM)
-                .padding(.vertical, AppTheme.spacingS)
-                .frame(maxWidth: .infinity)
-                .background(backgroundColor)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(borderColor, lineWidth: showingFeedback && (isSelected || isCorrectChoice) ? 2 : 1)
-                )
-                .cornerRadius(8)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .disabled(showingFeedback) // Disable all buttons while showing feedback
-        }
-        
-        @ViewBuilder
-        func sentenceChoiceButton(choice: String, layout: ResponsiveLayoutHelper) -> some View {
-            let isSelected = userAnswer == choice
-            let correctAnswer = getCurrentCorrectAnswer()
-            let isCorrectChoice = choice == correctAnswer
-            
-            // Determine colors based on feedback state
-            let backgroundColor: Color = {
-                if showingFeedback && isSelected {
-                    return isAnswerCorrect ? Color.green : Color.red
-                } else if isSelected {
-                    return AppTheme.accentOrange
-                } else if showingFeedback && isCorrectChoice {
-                    // Show the correct answer in green after selection
-                    return Color.green.opacity(0.3)
-                } else {
-                    return AppTheme.backgroundSecondary
-                }
-            }()
-            
-            let textColor: Color = {
-                if showingFeedback && (isSelected || isCorrectChoice) {
-                    return .white
-                } else if isSelected {
-                    return .white
-                } else {
-                    return AppTheme.textPrimary
-                }
-            }()
-            
-            let borderColor: Color = {
-                if showingFeedback && isSelected {
-                    return isAnswerCorrect ? Color.green : Color.red
-                } else if isSelected {
-                    return AppTheme.accentOrange
-                } else if showingFeedback && isCorrectChoice {
-                    return Color.green
-                } else {
-                    return AppTheme.textTertiary.opacity(0.3)
-                }
-            }()
-            
-            Button(action: {
-                handleChoiceSelection(choice)
-            }) {
-                HStack {
-                    Text(choice)
-                        .font(.system(size: layout.bodyFontSize - 1, weight: .medium))
-                        .foregroundColor(textColor)
-                        .multilineTextAlignment(.leading)
-                    
-                    Spacer()
-                    
-                    // Show checkmark or X icon when feedback is showing
-                    if showingFeedback && isSelected {
-                        Image(systemName: isAnswerCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                            .foregroundColor(.white)
-                            .font(.system(size: 20))
-                    } else if showingFeedback && isCorrectChoice && !isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.white)
-                            .font(.system(size: 20))
-                    }
-                }
-                .padding(AppTheme.spacingS)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(backgroundColor)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(borderColor, lineWidth: showingFeedback && (isSelected || isCorrectChoice) ? 2 : 1)
-                )
-                .cornerRadius(8)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .disabled(showingFeedback) // Disable all buttons while showing feedback
-        }
-        
-        @ViewBuilder
-        func progressView(current: Int, total: Int, layout: ResponsiveLayoutHelper) -> some View {
-            VStack(spacing: AppTheme.spacingXS) {
-                HStack {
-                    Text("Question \(current) of \(total)")
-                        .font(.system(size: 12, weight: .medium))
+                if customWords.isEmpty {
+                    Text("No custom words uploaded yet")
+                        .font(.system(size: 14))
                         .foregroundColor(AppTheme.textSecondary)
-                    Spacer()
-                    Text("\(Int((Double(current) / Double(total)) * 100))%")
-                        .font(.system(size: 12, weight: .bold))
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(AppTheme.backgroundSecondary)
+                        .cornerRadius(8)
+                } else {
+                    // List of words
+                    LazyVStack(spacing: AppTheme.spacingS) {
+                        ForEach(Array(customWords.enumerated()), id: \.offset) { index, word in
+                            customWordRow(word: word, index: index, layout: layout)
+                        }
+                    }
+                    
+                    // Actions
+                    if isCustomWordsSelectionMode && !selectedCustomWordIndices.isEmpty {
+                        VStack(spacing: AppTheme.spacingS) {
+                            ResponsiveButton(
+                                text: "Practice Selected (\(selectedCustomWordIndices.count))",
+                                action: {
+                                    let selectedWords = customWords.enumerated().filter { selectedCustomWordIndices.contains($0.offset) }.map { $0.element }
+                                    startCustomWordsPractice(customWords: selectedWords)
+                                    isCustomWordsSelectionMode = false
+                                    selectedCustomWordIndices.removeAll()
+                                },
+                                layout: layout,
+                                style: .success,
+                                icon: "play.fill"
+                            )
+                            
+                            Button(action: {
+                                deleteSelectedCustomWords(selectedIndices: Array(selectedCustomWordIndices))
+                            }) {
+                                HStack {
+                                    Image(systemName: "trash.fill")
+                                    Text("Delete Selected")
+                                }
+                                .font(.system(size: layout.bodyFontSize, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.red)
+                                .cornerRadius(8)
+                            }
+                        }
+                    } else if !isCustomWordsSelectionMode {
+                        ResponsiveButton(
+                            text: "Practice All Words",
+                            action: {
+                                startCustomWordsPractice(customWords: customWords)
+                            },
+                            layout: layout,
+                            style: .primary,
+                            icon: "play.fill"
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func customWordRow(word: DemoWord, index: Int, layout: ResponsiveLayoutHelper) -> some View {
+        HStack(spacing: AppTheme.spacingS) {
+            if isCustomWordsSelectionMode {
+                Button(action: {
+                    if selectedCustomWordIndices.contains(index) {
+                        selectedCustomWordIndices.remove(index)
+                    } else {
+                        selectedCustomWordIndices.insert(index)
+                    }
+                }) {
+                    Image(systemName: selectedCustomWordIndices.contains(index) ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 24))
+                        .foregroundColor(selectedCustomWordIndices.contains(index) ? AppTheme.success : AppTheme.textSecondary)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(word.word)
+                    .font(.system(size: layout.bodyFontSize, weight: .medium))
+                    .foregroundColor(AppTheme.textPrimary)
+            }
+            
+            Spacer()
+            
+            if !isCustomWordsSelectionMode {
+                Button(action: {
+                    deleteCustomWord(at: index)
+                }) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.red)
+                        .cornerRadius(6)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(AppTheme.spacingM)
+        .background(
+            isCustomWordsSelectionMode && selectedCustomWordIndices.contains(index)
+            ? AppTheme.primaryBlue.opacity(0.1)
+            : AppTheme.backgroundSecondary
+        )
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(
+                    isCustomWordsSelectionMode && selectedCustomWordIndices.contains(index)
+                    ? AppTheme.primaryBlue
+                    : Color.clear,
+                    lineWidth: 2
+                )
+        )
+    }
+    
+    // Custom Sentences Section
+    @ViewBuilder
+    func customSentencesSection(customSentences: [DemoSentence], layout: ResponsiveLayoutHelper) -> some View {
+        ModernCard(padding: AppTheme.spacingL) {
+            VStack(alignment: .leading, spacing: AppTheme.spacingM) {
+                // Header with Select and Add buttons
+                HStack {
+                    Image(systemName: "quote.bubble")
                         .foregroundColor(AppTheme.accentOrange)
-                }
-                
-                ProgressView(value: Double(current), total: Double(total))
-                    .progressViewStyle(LinearProgressViewStyle(tint: AppTheme.accentOrange))
-                    .scaleEffect(y: 1.5)
-            }
-        }
-        
-        @ViewBuilder
-        func completionView(categoryName: String, layout: ResponsiveLayoutHelper) -> some View {
-            VStack(spacing: AppTheme.spacingM) {
-                // Results summary card
-                if let summary = currentTestSummary {
-                    scoreDisplayCard(summary: summary, layout: layout)
-                } else {
-                    // Fallback for demo mode
-                    demoCompletionView(categoryName: categoryName, layout: layout)
-                }
-            }
-            .sheet(isPresented: $showingExportSheet) {
-                if let summary = currentTestSummary {
-                    ExportResultsView(summary: summary, showingExportSheet: $showingExportSheet)
-                }
-            }
-        }
-        
-        @ViewBuilder
-        func scoreDisplayCard(summary: TestSummary, layout: ResponsiveLayoutHelper) -> some View {
-            VStack(spacing: AppTheme.spacingL) {
-                // Header with score
-                VStack(spacing: AppTheme.spacingS) {
-                    Image(systemName: summary.accuracy >= 0.8 ? "star.fill" : summary.accuracy >= 0.6 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .font(.system(size: 48, weight: .medium))
-                        .foregroundColor(summary.accuracy >= 0.8 ? AppTheme.accentOrange : summary.accuracy >= 0.6 ? AppTheme.success : AppTheme.warning)
-                    
-                    Text("Test Complete!")
-                        .font(.system(size: layout.titleFontSize, weight: .bold))
+                    Text("Custom Sentences")
+                        .font(.system(size: layout.bodyFontSize + 2, weight: .semibold))
                         .foregroundColor(AppTheme.textPrimary)
+                    Spacer()
                     
-                    Text("\(summary.category.rawValue) Results")
-                        .font(.system(size: layout.bodyFontSize))
+                    if isCustomSentencesSelectionMode && !selectedCustomSentenceIndices.isEmpty {
+                        Text("\(selectedCustomSentenceIndices.count) selected")
+                            .font(.system(size: 14))
+                            .foregroundColor(AppTheme.accentOrange)
+                    } else if !customSentences.isEmpty {
+                        Text("\(customSentences.count) items")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(AppTheme.textSecondary)
+                    }
+                    
+                    // Add button (green plus)
+                    Button(action: {
+                        uploadType = .sentences
+                        showCustomUploadSheet = true
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(AppTheme.success)
+                    }
+                    
+                    // Select button
+                    if !customSentences.isEmpty {
+                        Button(action: {
+                            isCustomSentencesSelectionMode.toggle()
+                            if !isCustomSentencesSelectionMode {
+                                selectedCustomSentenceIndices.removeAll()
+                            }
+                        }) {
+                            Text(isCustomSentencesSelectionMode ? "Cancel" : "Select")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(AppTheme.primaryBlue)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(AppTheme.primaryBlue.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                    }
+                }
+                
+                if customSentences.isEmpty {
+                    Text("No custom sentences uploaded yet")
+                        .font(.system(size: 14))
                         .foregroundColor(AppTheme.textSecondary)
-                }
-                
-                // Score summary
-                VStack(spacing: AppTheme.spacingM) {
-                    HStack(spacing: AppTheme.spacingL) {
-                        VStack {
-                            Text("\(summary.score)")
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(AppTheme.accentOrange)
-                            Text("Correct")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(AppTheme.textSecondary)
-                        }
-                        
-                        VStack {
-                            Text("\(summary.totalQuestions)")
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(AppTheme.textPrimary)
-                            Text("Total")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(AppTheme.textSecondary)
-                        }
-                        
-                        VStack {
-                            Text(summary.accuracyPercentage)
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(summary.accuracy >= 0.8 ? AppTheme.success : summary.accuracy >= 0.6 ? AppTheme.accentOrange : AppTheme.warning)
-                            Text("Accuracy")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(AppTheme.textSecondary)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(AppTheme.backgroundSecondary)
+                        .cornerRadius(8)
+                } else {
+                    LazyVStack(spacing: AppTheme.spacingS) {
+                        ForEach(Array(customSentences.enumerated()), id: \.offset) { index, sentence in
+                            customSentenceRow(sentence: sentence, index: index, layout: layout)
                         }
                     }
-                    .padding(.horizontal, AppTheme.spacingL)
                     
-                    // Additional stats
-                    HStack(spacing: AppTheme.spacingL) {
-                        VStack {
-                            Text(summary.testDurationFormatted)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(AppTheme.textPrimary)
-                            Text("Duration")
-                                .font(.system(size: 10))
-                                .foregroundColor(AppTheme.textSecondary)
+                    if isCustomSentencesSelectionMode && !selectedCustomSentenceIndices.isEmpty {
+                        VStack(spacing: AppTheme.spacingS) {
+                            ResponsiveButton(
+                                text: "Practice Selected (\(selectedCustomSentenceIndices.count))",
+                                action: {
+                                    let selectedSentences = customSentences.enumerated().filter { selectedCustomSentenceIndices.contains($0.offset) }.map { $0.element }
+                                    startCustomSentencesPractice(customSentences: selectedSentences)
+                                    isCustomSentencesSelectionMode = false
+                                    selectedCustomSentenceIndices.removeAll()
+                                },
+                                layout: layout,
+                                style: .success,
+                                icon: "play.fill"
+                            )
+                            
+                            Button(action: {
+                                deleteSelectedCustomSentences(selectedIndices: Array(selectedCustomSentenceIndices))
+                            }) {
+                                HStack {
+                                    Image(systemName: "trash.fill")
+                                    Text("Delete Selected")
+                                }
+                                .font(.system(size: layout.bodyFontSize, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.red)
+                                .cornerRadius(8)
+                            }
                         }
-                        
-                        VStack {
-                            Text(summary.averageResponseTime)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(AppTheme.textPrimary)
-                            Text("Avg Time")
-                                .font(.system(size: 10))
-                                .foregroundColor(AppTheme.textSecondary)
-                        }
-                        
-                        VStack {
-                            Text(summary.voiceUsed.displayName)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(AppTheme.textPrimary)
-                                .lineLimit(1)
-                            Text("Voice")
-                                .font(.system(size: 10))
-                                .foregroundColor(AppTheme.textSecondary)
-                        }
+                    } else if !isCustomSentencesSelectionMode {
+                        ResponsiveButton(
+                            text: "Practice All Sentences",
+                            action: {
+                                startCustomSentencesPractice(customSentences: customSentences)
+                            },
+                            layout: layout,
+                            style: .primary,
+                            icon: "play.fill"
+                        )
                     }
-                }
-                .padding(AppTheme.spacingM)
-                .background(AppTheme.backgroundSecondary)
-                .cornerRadius(12)
-                
-                // Action buttons
-                VStack(spacing: AppTheme.spacingS) {
-                    ResponsiveButton(
-                        text: "📤 Export Results",
-                        action: {
-                            showingExportSheet = true
-                        },
-                        layout: layout,
-                        style: .primary,
-                        icon: "square.and.arrow.up"
-                    )
-                    
-                    ResponsiveButton(
-                        text: "Try Again",
-                        action: {
-                            restartTest()
-                        },
-                        layout: layout,
-                        style: .accent,
-                        icon: "arrow.clockwise"
-                    )
-                    
-                    ResponsiveButton(
-                        text: "← Home",
-                        action: {
-                            screen = .homescreen
-                        },
-                        layout: layout,
-                        style: .secondary,
-                        icon: "house"
-                    )
                 }
             }
         }
-        
-        @ViewBuilder
-        func demoCompletionView(categoryName: String, layout: ResponsiveLayoutHelper) -> some View {
-            VStack(spacing: AppTheme.spacingM) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 48, weight: .medium))
-                    .foregroundColor(AppTheme.success)
+    }
+    
+    @ViewBuilder
+    func customSentenceRow(sentence: DemoSentence, index: Int, layout: ResponsiveLayoutHelper) -> some View {
+        HStack(spacing: AppTheme.spacingS) {
+            if isCustomSentencesSelectionMode {
+                Button(action: {
+                    if selectedCustomSentenceIndices.contains(index) {
+                        selectedCustomSentenceIndices.remove(index)
+                    } else {
+                        selectedCustomSentenceIndices.insert(index)
+                    }
+                }) {
+                    Image(systemName: selectedCustomSentenceIndices.contains(index) ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 24))
+                        .foregroundColor(selectedCustomSentenceIndices.contains(index) ? AppTheme.success : AppTheme.textSecondary)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(sentence.sentence)
+                    .font(.system(size: layout.bodyFontSize, weight: .medium))
+                    .foregroundColor(AppTheme.textPrimary)
+                    .lineLimit(2)
+            }
+            
+            Spacer()
+            
+            if !isCustomSentencesSelectionMode {
+                Button(action: {
+                    deleteCustomSentence(at: index)
+                }) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.red)
+                        .cornerRadius(6)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(AppTheme.spacingM)
+        .background(
+            isCustomSentencesSelectionMode && selectedCustomSentenceIndices.contains(index)
+            ? AppTheme.primaryBlue.opacity(0.1)
+            : AppTheme.backgroundSecondary
+        )
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(
+                    isCustomSentencesSelectionMode && selectedCustomSentenceIndices.contains(index)
+                    ? AppTheme.primaryBlue
+                    : Color.clear,
+                    lineWidth: 2
+                )
+        )
+    }
+    
+    // Custom Matched Pairs Section
+    @ViewBuilder
+    func customMatchedPairsSection(customMatchedPairs: [Word], layout: ResponsiveLayoutHelper) -> some View {
+        ModernCard(padding: AppTheme.spacingL) {
+            VStack(alignment: .leading, spacing: AppTheme.spacingM) {
+                // Header with Select and Add buttons
+                HStack {
+                    Image(systemName: "square.grid.2x2")
+                        .foregroundColor(AppTheme.primaryBlue)
+                    Text("Custom Matched Pairs")
+                        .font(.system(size: layout.bodyFontSize + 2, weight: .semibold))
+                        .foregroundColor(AppTheme.textPrimary)
+                    Spacer()
+                    
+                    if isCustomMatchedPairsSelectionMode && !selectedCustomMatchedPairIndices.isEmpty {
+                        Text("\(selectedCustomMatchedPairIndices.count) selected")
+                            .font(.system(size: 14))
+                            .foregroundColor(AppTheme.accentOrange)
+                    } else if !customMatchedPairs.isEmpty {
+                        Text("\(customMatchedPairs.count) items")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(AppTheme.textSecondary)
+                    }
+                    
+                    // Add button (green plus)
+                    Button(action: {
+                        uploadType = .matchedPairs
+                        showCustomUploadSheet = true
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(AppTheme.success)
+                    }
+                    
+                    // Select button
+                    if !customMatchedPairs.isEmpty {
+                        Button(action: {
+                            isCustomMatchedPairsSelectionMode.toggle()
+                            if !isCustomMatchedPairsSelectionMode {
+                                selectedCustomMatchedPairIndices.removeAll()
+                            }
+                        }) {
+                            Text(isCustomMatchedPairsSelectionMode ? "Cancel" : "Select")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(AppTheme.primaryBlue)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(AppTheme.primaryBlue.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                    }
+                }
                 
-                Text("Training Complete!")
+                if customMatchedPairs.isEmpty {
+                    Text("No custom matched pairs uploaded yet")
+                        .font(.system(size: 14))
+                        .foregroundColor(AppTheme.textSecondary)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(AppTheme.backgroundSecondary)
+                        .cornerRadius(8)
+                } else {
+                    LazyVStack(spacing: AppTheme.spacingS) {
+                        ForEach(Array(customMatchedPairs.enumerated()), id: \.offset) { index, pair in
+                            customMatchedPairRow(pair: pair, index: index, layout: layout)
+                        }
+                    }
+                    
+                    if isCustomMatchedPairsSelectionMode && !selectedCustomMatchedPairIndices.isEmpty {
+                        VStack(spacing: AppTheme.spacingS) {
+                            ResponsiveButton(
+                                text: "Practice Selected (\(selectedCustomMatchedPairIndices.count))",
+                                action: {
+                                    let selectedPairs = customMatchedPairs.enumerated().filter { selectedCustomMatchedPairIndices.contains($0.offset) }.map { $0.element }
+                                    startCustomMatchedPairsPractice(customMatchedPairs: selectedPairs)
+                                    isCustomMatchedPairsSelectionMode = false
+                                    selectedCustomMatchedPairIndices.removeAll()
+                                },
+                                layout: layout,
+                                style: .success,
+                                icon: "play.fill"
+                            )
+                            
+                            Button(action: {
+                                deleteSelectedCustomMatchedPairs(selectedIndices: Array(selectedCustomMatchedPairIndices))
+                            }) {
+                                HStack {
+                                    Image(systemName: "trash.fill")
+                                    Text("Delete Selected")
+                                }
+                                .font(.system(size: layout.bodyFontSize, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.red)
+                                .cornerRadius(8)
+                            }
+                        }
+                    } else if !isCustomMatchedPairsSelectionMode {
+                        ResponsiveButton(
+                            text: "Practice All Matched Pairs",
+                            action: {
+                                startCustomMatchedPairsPractice(customMatchedPairs: customMatchedPairs)
+                            },
+                            layout: layout,
+                            style: .primary,
+                            icon: "play.fill"
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func customMatchedPairRow(pair: Word, index: Int, layout: ResponsiveLayoutHelper) -> some View {
+        HStack(spacing: AppTheme.spacingS) {
+            if isCustomMatchedPairsSelectionMode {
+                Button(action: {
+                    if selectedCustomMatchedPairIndices.contains(index) {
+                        selectedCustomMatchedPairIndices.remove(index)
+                    } else {
+                        selectedCustomMatchedPairIndices.insert(index)
+                    }
+                }) {
+                    Image(systemName: selectedCustomMatchedPairIndices.contains(index) ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 24))
+                        .foregroundColor(selectedCustomMatchedPairIndices.contains(index) ? AppTheme.success : AppTheme.textSecondary)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(pair.firstWord) vs \(pair.lastWord)")
+                    .font(.system(size: layout.bodyFontSize, weight: .medium))
+                    .foregroundColor(AppTheme.textPrimary)
+            }
+            
+            Spacer()
+            
+            if !isCustomMatchedPairsSelectionMode {
+                Button(action: {
+                    deleteCustomMatchedPair(at: index)
+                }) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.red)
+                        .cornerRadius(6)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(AppTheme.spacingM)
+        .background(
+            isCustomMatchedPairsSelectionMode && selectedCustomMatchedPairIndices.contains(index)
+            ? AppTheme.primaryBlue.opacity(0.1)
+            : AppTheme.backgroundSecondary
+        )
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(
+                    isCustomMatchedPairsSelectionMode && selectedCustomMatchedPairIndices.contains(index)
+                    ? AppTheme.primaryBlue
+                    : Color.clear,
+                    lineWidth: 2
+                )
+        )
+    }
+    
+    // MARK: - Custom Item Management Functions
+    
+    func deleteCustomWord(at index: Int) {
+        guard var customWords = loadCustomWords() else { return }
+        guard index >= 0 && index < customWords.count else {
+            print("⚠️ Invalid index \(index) for customWords array of size \(customWords.count)")
+            return
+        }
+        customWords.remove(at: index)
+        saveCustomWords(customWords)
+        customItemsRefreshTrigger = UUID() // Force view refresh
+        print("✅ Deleted custom word at index \(index)")
+    }
+    
+    func deleteCustomSentence(at index: Int) {
+        guard var customSentences = loadCustomSentences() else { return }
+        guard index >= 0 && index < customSentences.count else {
+            print("⚠️ Invalid index \(index) for customSentences array of size \(customSentences.count)")
+            return
+        }
+        customSentences.remove(at: index)
+        saveCustomSentences(customSentences)
+        customItemsRefreshTrigger = UUID() // Force view refresh
+        print("✅ Deleted custom sentence at index \(index)")
+    }
+    
+    func deleteSelectedCustomWords(selectedIndices: [Int]) {
+        guard var customWords = loadCustomWords() else { return }
+        let sortedIndices = selectedIndices.sorted(by: >)
+        for index in sortedIndices {
+            if index >= 0 && index < customWords.count {
+                customWords.remove(at: index)
+            }
+        }
+        saveCustomWords(customWords)
+        selectedCustomWordIndices.removeAll()
+        isCustomWordsSelectionMode = false
+        customItemsRefreshTrigger = UUID() // Force view refresh
+        print("✅ Deleted \(sortedIndices.count) custom words")
+    }
+    
+    func deleteSelectedCustomSentences(selectedIndices: [Int]) {
+        guard var customSentences = loadCustomSentences() else { return }
+        let sortedIndices = selectedIndices.sorted(by: >)
+        for index in sortedIndices {
+            if index >= 0 && index < customSentences.count {
+                customSentences.remove(at: index)
+            }
+        }
+        saveCustomSentences(customSentences)
+        selectedCustomSentenceIndices.removeAll()
+        isCustomSentencesSelectionMode = false
+        customItemsRefreshTrigger = UUID() // Force view refresh
+        print("✅ Deleted \(sortedIndices.count) custom sentences")
+    }
+    
+    func loadCustomWords() -> [DemoWord]? {
+        guard let data = UserDefaults.standard.data(forKey: "customWords"),
+              let words = try? JSONDecoder().decode([DemoWord].self, from: data) else {
+            return nil
+        }
+        return words
+    }
+    
+    func loadCustomSentences() -> [DemoSentence]? {
+        guard let data = UserDefaults.standard.data(forKey: "customSentences"),
+              let sentences = try? JSONDecoder().decode([DemoSentence].self, from: data) else {
+            return nil
+        }
+        return sentences
+    }
+    
+    func saveCustomWords(_ words: [DemoWord]) {
+        if let encoded = try? JSONEncoder().encode(words) {
+            UserDefaults.standard.set(encoded, forKey: "customWords")
+        }
+    }
+    
+    func saveCustomSentences(_ sentences: [DemoSentence]) {
+        if let encoded = try? JSONEncoder().encode(sentences) {
+            UserDefaults.standard.set(encoded, forKey: "customSentences")
+        }
+    }
+    
+    func loadCustomMatchedPairs() -> [Word]? {
+        guard let data = UserDefaults.standard.data(forKey: "customMatchedPairs"),
+              let pairs = try? JSONDecoder().decode([Word].self, from: data) else {
+            return nil
+        }
+        return pairs
+    }
+    
+    func saveCustomMatchedPairs(_ pairs: [Word]) {
+        if let encoded = try? JSONEncoder().encode(pairs) {
+            UserDefaults.standard.set(encoded, forKey: "customMatchedPairs")
+        }
+    }
+    
+    func deleteCustomMatchedPair(at index: Int) {
+        guard var customMatchedPairs = loadCustomMatchedPairs() else { return }
+        guard index >= 0 && index < customMatchedPairs.count else {
+            print("⚠️ Invalid index \(index) for customMatchedPairs array of size \(customMatchedPairs.count)")
+            return
+        }
+        customMatchedPairs.remove(at: index)
+        saveCustomMatchedPairs(customMatchedPairs)
+        customItemsRefreshTrigger = UUID() // Force view refresh
+        print("✅ Deleted custom matched pair at index \(index)")
+    }
+    
+    func deleteSelectedCustomMatchedPairs(selectedIndices: [Int]) {
+        guard var customMatchedPairs = loadCustomMatchedPairs() else { return }
+        let sortedIndices = selectedIndices.sorted(by: >)
+        for index in sortedIndices {
+            if index >= 0 && index < customMatchedPairs.count {
+                customMatchedPairs.remove(at: index)
+            }
+        }
+        saveCustomMatchedPairs(customMatchedPairs)
+        selectedCustomMatchedPairIndices.removeAll()
+        isCustomMatchedPairsSelectionMode = false
+        customItemsRefreshTrigger = UUID() // Force view refresh
+        print("✅ Deleted \(sortedIndices.count) custom matched pairs")
+    }
+    
+    // Clear all custom data
+    func clearAllCustomData() {
+        UserDefaults.standard.removeObject(forKey: "customWords")
+        UserDefaults.standard.removeObject(forKey: "customSentences")
+        UserDefaults.standard.removeObject(forKey: "customMatchedPairs")
+        selectedCustomWordIndices.removeAll()
+        selectedCustomSentenceIndices.removeAll()
+        selectedCustomMatchedPairIndices.removeAll()
+        isCustomWordsSelectionMode = false
+        isCustomSentencesSelectionMode = false
+        isCustomMatchedPairsSelectionMode = false
+        customItemsRefreshTrigger = UUID() // Force view refresh
+        print("✅ Cleared all custom words and sentences")
+    }
+    
+    // MARK: - Helper Views
+    
+    @ViewBuilder
+    func choiceButton(choice: String, layout: ResponsiveLayoutHelper) -> some View {
+        let isSelected = userAnswer == choice
+        let correctAnswer = getCurrentCorrectAnswer()
+        let isCorrectChoice = choice == correctAnswer
+        
+        // Determine colors based on feedback state
+        let backgroundColor: Color = {
+            if showingFeedback && isSelected {
+                return isAnswerCorrect ? Color.green : Color.red
+            } else if isSelected {
+                return AppTheme.accentOrange
+            } else if showingFeedback && isCorrectChoice {
+                return Color.green.opacity(0.3)
+            } else {
+                return AppTheme.backgroundSecondary
+            }
+        }()
+        
+        let textColor: Color = {
+            if showingFeedback && (isSelected || isCorrectChoice) {
+                return .white
+            } else if isSelected {
+                return .white
+            } else {
+                return AppTheme.textPrimary
+            }
+        }()
+        
+        let borderColor: Color = {
+            if showingFeedback && isSelected {
+                return isAnswerCorrect ? Color.green : Color.red
+            } else if isSelected {
+                return AppTheme.accentOrange
+            } else if showingFeedback && isCorrectChoice {
+                return Color.green
+            } else {
+                return AppTheme.textTertiary.opacity(0.3)
+            }
+        }()
+        
+        Button(action: {
+            handleChoiceSelection(choice)
+        }) {
+            HStack {
+                Text(choice)
+                    .font(.system(size: layout.bodyFontSize, weight: .medium))
+                    .foregroundColor(textColor)
+                
+                Spacer()
+                
+                // Show checkmark or X icon when feedback is showing
+                if showingFeedback && isSelected {
+                    Image(systemName: isAnswerCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 20))
+                } else if showingFeedback && isCorrectChoice && !isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 20))
+                }
+            }
+            .padding(.horizontal, AppTheme.spacingM)
+            .padding(.vertical, AppTheme.spacingS)
+            .frame(maxWidth: .infinity)
+            .background(backgroundColor)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(borderColor, lineWidth: showingFeedback && (isSelected || isCorrectChoice) ? 2 : 1)
+            )
+            .cornerRadius(8)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(showingFeedback) // Disable all buttons while showing feedback
+    }
+    
+    @ViewBuilder
+    func sentenceChoiceButton(choice: String, layout: ResponsiveLayoutHelper) -> some View {
+        let isSelected = userAnswer == choice
+        let correctAnswer = getCurrentCorrectAnswer()
+        let isCorrectChoice = choice == correctAnswer
+        
+        // Determine colors based on feedback state
+        let backgroundColor: Color = {
+            if showingFeedback && isSelected {
+                return isAnswerCorrect ? Color.green : Color.red
+            } else if isSelected {
+                return AppTheme.accentOrange
+            } else if showingFeedback && isCorrectChoice {
+                // Show the correct answer in green after selection
+                return Color.green.opacity(0.3)
+            } else {
+                return AppTheme.backgroundSecondary
+            }
+        }()
+        
+        let textColor: Color = {
+            if showingFeedback && (isSelected || isCorrectChoice) {
+                return .white
+            } else if isSelected {
+                return .white
+            } else {
+                return AppTheme.textPrimary
+            }
+        }()
+        
+        let borderColor: Color = {
+            if showingFeedback && isSelected {
+                return isAnswerCorrect ? Color.green : Color.red
+            } else if isSelected {
+                return AppTheme.accentOrange
+            } else if showingFeedback && isCorrectChoice {
+                return Color.green
+            } else {
+                return AppTheme.textTertiary.opacity(0.3)
+            }
+        }()
+        
+        Button(action: {
+            handleChoiceSelection(choice)
+        }) {
+            HStack {
+                Text(choice)
+                    .font(.system(size: layout.bodyFontSize - 1, weight: .medium))
+                    .foregroundColor(textColor)
+                    .multilineTextAlignment(.leading)
+                
+                Spacer()
+                
+                // Show checkmark or X icon when feedback is showing
+                if showingFeedback && isSelected {
+                    Image(systemName: isAnswerCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 20))
+                } else if showingFeedback && isCorrectChoice && !isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 20))
+                }
+            }
+            .padding(AppTheme.spacingS)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(backgroundColor)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(borderColor, lineWidth: showingFeedback && (isSelected || isCorrectChoice) ? 2 : 1)
+            )
+            .cornerRadius(8)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(showingFeedback) // Disable all buttons while showing feedback
+    }
+    
+    @ViewBuilder
+    func progressView(current: Int, total: Int, layout: ResponsiveLayoutHelper) -> some View {
+        VStack(spacing: AppTheme.spacingXS) {
+            HStack {
+                Text("Question \(current) of \(total)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(AppTheme.textSecondary)
+                Spacer()
+                Text("\(Int((Double(current) / Double(total)) * 100))%")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(AppTheme.accentOrange)
+            }
+            
+            ProgressView(value: Double(current), total: Double(total))
+                .progressViewStyle(LinearProgressViewStyle(tint: AppTheme.accentOrange))
+                .scaleEffect(y: 1.5)
+        }
+    }
+    
+    @ViewBuilder
+    func completionView(categoryName: String, layout: ResponsiveLayoutHelper) -> some View {
+        VStack(spacing: AppTheme.spacingM) {
+            // Results summary card
+            if let summary = currentTestSummary {
+                scoreDisplayCard(summary: summary, layout: layout)
+            } else {
+                // Fallback for demo mode
+                demoCompletionView(categoryName: categoryName, layout: layout)
+            }
+        }
+        .sheet(isPresented: $showingExportSheet) {
+            if let summary = currentTestSummary {
+                ExportResultsView(summary: summary, showingExportSheet: $showingExportSheet)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func scoreDisplayCard(summary: TestSummary, layout: ResponsiveLayoutHelper) -> some View {
+        VStack(spacing: AppTheme.spacingL) {
+            // Header with score
+            VStack(spacing: AppTheme.spacingS) {
+                Image(systemName: summary.accuracy >= 0.8 ? "star.fill" : summary.accuracy >= 0.6 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundColor(summary.accuracy >= 0.8 ? AppTheme.accentOrange : summary.accuracy >= 0.6 ? AppTheme.success : AppTheme.warning)
+                
+                Text("Test Complete!")
                     .font(.system(size: layout.titleFontSize, weight: .bold))
                     .foregroundColor(AppTheme.textPrimary)
                 
-                Text("You've completed the \(categoryName) training session!")
+                Text("\(summary.category.rawValue) Results")
                     .font(.system(size: layout.bodyFontSize))
                     .foregroundColor(AppTheme.textSecondary)
-                    .multilineTextAlignment(.center)
+            }
+            
+            // Score summary
+            VStack(spacing: AppTheme.spacingM) {
+                HStack(spacing: AppTheme.spacingL) {
+                    VStack {
+                        Text("\(summary.score)")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(AppTheme.accentOrange)
+                        Text("Correct")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(AppTheme.textSecondary)
+                    }
+                    
+                    VStack {
+                        Text("\(summary.totalQuestions)")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(AppTheme.textPrimary)
+                        Text("Total")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(AppTheme.textSecondary)
+                    }
+                    
+                    VStack {
+                        Text(summary.accuracyPercentage)
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(summary.accuracy >= 0.8 ? AppTheme.success : summary.accuracy >= 0.6 ? AppTheme.accentOrange : AppTheme.warning)
+                        Text("Accuracy")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(AppTheme.textSecondary)
+                    }
+                }
+                .padding(.horizontal, AppTheme.spacingL)
+                
+                // Additional stats
+                HStack(spacing: AppTheme.spacingL) {
+                    VStack {
+                        Text(summary.testDurationFormatted)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(AppTheme.textPrimary)
+                        Text("Duration")
+                            .font(.system(size: 10))
+                            .foregroundColor(AppTheme.textSecondary)
+                    }
+                    
+                    VStack {
+                        Text(summary.averageResponseTime)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(AppTheme.textPrimary)
+                        Text("Avg Time")
+                            .font(.system(size: 10))
+                            .foregroundColor(AppTheme.textSecondary)
+                    }
+                    
+                    VStack {
+                        Text(summary.voiceUsed.displayName)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(AppTheme.textPrimary)
+                            .lineLimit(1)
+                        Text("Voice")
+                            .font(.system(size: 10))
+                            .foregroundColor(AppTheme.textSecondary)
+                    }
+                }
+            }
+            .padding(AppTheme.spacingM)
+            .background(AppTheme.backgroundSecondary)
+            .cornerRadius(12)
+            
+            // Action buttons
+            VStack(spacing: AppTheme.spacingS) {
+                ResponsiveButton(
+                    text: "📤 Export Results",
+                    action: {
+                        showingExportSheet = true
+                    },
+                    layout: layout,
+                    style: .primary,
+                    icon: "square.and.arrow.up"
+                )
                 
                 ResponsiveButton(
-                    text: "Practice Again",
+                    text: "Try Again",
                     action: {
                         restartTest()
                     },
@@ -14688,11 +14649,49 @@ struct ContentView: View {
                     style: .accent,
                     icon: "arrow.clockwise"
                 )
+                
+                ResponsiveButton(
+                    text: "← Home",
+                    action: {
+                        screen = .homescreen
+                    },
+                    layout: layout,
+                    style: .secondary,
+                    icon: "house"
+                )
             }
         }
     }
     
-    
+    @ViewBuilder
+    func demoCompletionView(categoryName: String, layout: ResponsiveLayoutHelper) -> some View {
+        VStack(spacing: AppTheme.spacingM) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 48, weight: .medium))
+                .foregroundColor(AppTheme.success)
+            
+            Text("Training Complete!")
+                .font(.system(size: layout.titleFontSize, weight: .bold))
+                .foregroundColor(AppTheme.textPrimary)
+            
+            Text("You've completed the \(categoryName) training session!")
+                .font(.system(size: layout.bodyFontSize))
+                .foregroundColor(AppTheme.textSecondary)
+                .multilineTextAlignment(.center)
+            
+            ResponsiveButton(
+                text: "Practice Again",
+                action: {
+                    restartTest()
+                },
+                layout: layout,
+                style: .accent,
+                icon: "arrow.clockwise"
+            )
+        }
+    }
+
+
     func restartTest() {
         currentQuestionIndex = 0
         userAnswer = ""
@@ -16902,3 +16901,4 @@ struct ContentView: View {
             }
         }
     }
+}

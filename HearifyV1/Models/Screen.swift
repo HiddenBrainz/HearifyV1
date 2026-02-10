@@ -15,6 +15,8 @@ enum Screen {
     case wordRecognitionScreen, sentenceComprehensionScreen, sentencesInNoiseScreen, diagnosticTestScreen, matchedPairsScreen, aiAnalysisScreen, practiceListSessionScreen, customPracticeScreen
     // Phase selection screens
     case phaseSelectionScreen, speakingPracticeScreen, cameraVisionScreen
+    // Educational training modules (Hearing Loss, Hearing Aids, Cochlear Implants)
+    case educationalTrainingScreen
     // CloudKit / Clinician screens
     case clinicianLinkingScreen
     // Test/Developer screens

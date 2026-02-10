@@ -21,6 +21,7 @@ class FirebaseManager: ObservableObject {
     private let db = Firestore.firestore()
     private let auth = Auth.auth()
     private let storage = Storage.storage()
+    private let consentManager = ConsentManager.shared
 
     private init() {
         // Check if already signed in with email/password (not anonymous)
@@ -288,6 +289,12 @@ class FirebaseManager: ObservableObject {
             throw NSError(domain: "Not signed in", code: -1)
         }
 
+        // Check if user has consented to performance data collection
+        guard consentManager.hasConsent(for: .performanceData) else {
+            print("⚠️ Skipping session sync - no performance data consent")
+            return
+        }
+
         let sessionData: [String: Any] = [
             "patientUID": uid,
             "sessionDate": Timestamp(date: session.sessionDate),
@@ -314,6 +321,12 @@ class FirebaseManager: ObservableObject {
     func syncCategoryStatistics(listeningHistory: ListeningHistory) async throws {
         guard let uid = currentUser?.uid else {
             throw NSError(domain: "Not signed in", code: -1)
+        }
+
+        // Check if user has consented to progress sharing
+        guard consentManager.hasConsent(for: .progressSharing) else {
+            print("⚠️ Skipping category statistics sync - no progress sharing consent")
+            return
         }
 
         print("📊 Syncing category statistics to Firebase...")
@@ -365,6 +378,13 @@ class FirebaseManager: ObservableObject {
     func uploadPDFReport(fileURL: URL) async throws -> String {
         guard let uid = currentUser?.uid else {
             throw NSError(domain: "Not signed in", code: -1)
+        }
+
+        // Check if user has consented to progress sharing (reports contain progress data)
+        guard consentManager.hasConsent(for: .progressSharing) else {
+            throw NSError(domain: "No progress sharing consent", code: -2, userInfo: [
+                NSLocalizedDescriptionKey: "Please enable 'Progress Data Sharing' in Settings to share reports"
+            ])
         }
 
         print("📄 Uploading PDF report to Firebase Storage...")

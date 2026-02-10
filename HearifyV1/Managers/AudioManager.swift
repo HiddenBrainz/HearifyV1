@@ -32,6 +32,11 @@ class AudioManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     private var audioSessionConfigured = false
     private var lastPlayTime: Date = .distantPast
     private let minimumPlayInterval: TimeInterval = 0.1 // Prevent clicks faster than 100ms (reduced for better UX)
+
+    // Background noise support
+    private var backgroundNoisePlayer: AVAudioPlayer?
+    @Published var isPlayingBackgroundNoise = false
+    private var backgroundNoiseVolume: Float = 0.3 // Default noise volume (30%)
     
     // Notification observers for proper cleanup
     private var appBecameActiveObserver: NSObjectProtocol?
@@ -390,6 +395,58 @@ class AudioManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         }
     }
 
+    // MARK: - Background Noise Methods
+
+    /// Start playing background noise (looping)
+    func startBackgroundNoise(volume: Float? = nil) {
+        // Stop any existing background noise
+        stopBackgroundNoise()
+
+        // Use provided volume or default
+        if let volume = volume {
+            backgroundNoiseVolume = max(0.0, min(1.0, volume))
+        }
+
+        guard let url = Bundle.main.url(forResource: "BackgroundNoise", withExtension: "mp3") else {
+            print("❌ Background noise file not found")
+            return
+        }
+
+        do {
+            // Create and configure player
+            backgroundNoisePlayer = try AVAudioPlayer(contentsOf: url)
+            backgroundNoisePlayer?.numberOfLoops = -1 // Loop infinitely
+            backgroundNoisePlayer?.volume = backgroundNoiseVolume
+            backgroundNoisePlayer?.prepareToPlay()
+
+            // Start playing
+            let success = backgroundNoisePlayer?.play() ?? false
+            if success {
+                isPlayingBackgroundNoise = true
+                print("🔊 Background noise started at \(Int(backgroundNoiseVolume * 100))% volume")
+            } else {
+                print("❌ Failed to start background noise")
+            }
+        } catch {
+            print("❌ Error loading background noise: \(error)")
+        }
+    }
+
+    /// Stop playing background noise
+    func stopBackgroundNoise() {
+        backgroundNoisePlayer?.stop()
+        backgroundNoisePlayer = nil
+        isPlayingBackgroundNoise = false
+        print("🔇 Background noise stopped")
+    }
+
+    /// Adjust background noise volume
+    func setBackgroundNoiseVolume(_ volume: Float) {
+        backgroundNoiseVolume = max(0.0, min(1.0, volume))
+        backgroundNoisePlayer?.volume = backgroundNoiseVolume
+        print("🔊 Background noise volume set to: \(Int(backgroundNoiseVolume * 100))%")
+    }
+
     deinit {
         // Remove notification observers
         if let observer = appBecameActiveObserver {
@@ -409,6 +466,10 @@ class AudioManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
+
+        // Stop background noise
+        backgroundNoisePlayer?.stop()
+        backgroundNoisePlayer = nil
 
         print("🧹 AudioManager deinitialized")
     }

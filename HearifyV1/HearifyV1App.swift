@@ -11,6 +11,8 @@ import FirebaseCore
 @main
 struct HearifyV1App: App {
     @StateObject private var firebase = FirebaseManager.shared
+    @StateObject private var consentManager = ConsentManager.shared
+    @State private var hasAgreedToLegalTerms = UserDefaults.standard.bool(forKey: "hasAgreedToLegalTerms")
 
     init() {
         // Configure Firebase
@@ -20,12 +22,23 @@ struct HearifyV1App: App {
 
     var body: some Scene {
         WindowGroup {
-            if firebase.isSignedIn {
-                ContentView()
-                    .environmentObject(firebase)
-            } else {
-                PatientLoginView()
-                    .environmentObject(firebase)
+            Group {
+                if !firebase.isSignedIn {
+                    // Step 1: Login/Signup
+                    PatientLoginView()
+                        .environmentObject(firebase)
+                } else if !hasAgreedToLegalTerms {
+                    // Step 2: Legal Agreement (Terms & Privacy)
+                    LegalAgreementView(hasAgreedToTerms: $hasAgreedToLegalTerms)
+                } else if !consentManager.hasCompletedConsentFlow {
+                    // Step 3: Data Collection Consent
+                    DataConsentView(hasCompletedConsent: $consentManager.hasCompletedConsentFlow)
+                        .environmentObject(firebase)
+                } else {
+                    // Step 4: Main App
+                    ContentView()
+                        .environmentObject(firebase)
+                }
             }
         }
     }
