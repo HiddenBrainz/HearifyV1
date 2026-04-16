@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "443808602359",
+    "project_id": "hearify-1c669",
+    "storage_bucket": "hearify-1c669.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443808602359:android:58171c42b10a3262665bf2",
+        "android_client_info": {
+          "package_name": "com.hearify.hearify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnAoOBadCoOh7pdz7X91hcf2k72Mr-1hQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

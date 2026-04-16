@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find *)",
+      "Bash(flutter --version)",
+      "Read(//Users/vedantnahar/**)",
+      "Read(//Users/vedantnahar/development/**)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(brew --version)",
+      "Bash(brew install *)",
+      "Bash(flutter create *)",
+      "Bash(cp /Users/vedantnahar/Downloads/HearifyV1/HearifyV1/*.csv /Users/vedantnahar/Downloads/HearifyV1/flutter/assets/csv/)",
+      "Bash(cp -R /Users/vedantnahar/Downloads/HearifyV1/HearifyV1/Audio/. /Users/vedantnahar/Downloads/HearifyV1/flutter/assets/audio/)",
+      "Bash(flutter pub *)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter test *)",
+      "Bash(flutter build *)",
+      "Bash(flutter doctor *)",
+      "Bash(xcode-select -p)",
+      "Bash(flutter devices *)",
+      "Bash(flutter run *)",
+      "Bash(tee /tmp/flutter_web.log)",
+      "Bash(nc -U /tmp/nonexistent)",
+      "Bash(pkill -f \"flutter.*chrome.*5151\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:5151/)",
+      "Bash(npm install *)",
+      "Bash(dart pub *)",
+      "Bash(firebase --version)",
+      "Bash(~/.pub-cache/bin/flutterfire --version)",
+      "Bash(~/.pub-cache/bin/flutterfire configure *)",
+      "Bash('~/.pub-cache/bin/flutterfire' configure *)",
+      "Bash(pkill -f \"flutter_tools.*chrome\")",
+      "Bash(awk '{print $NF}')",
+      "Bash(git rm *)"
+    ]
+  }
+}

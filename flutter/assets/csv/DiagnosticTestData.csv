@@ -1,0 +1,9 @@
+content,type,difficulty,choice1,choice2,choice3,choice4
+sun,word,easy,sun,run,fun,gun
+The cat sits,sentence,easy,The cat sits,The dog runs,The bird flies,The fish swims
+elephant,word,medium,elephant,telephone,envelope,escalator
+Where did you put the book,sentence,medium,Where did you put the book,When did you read the news,How did you find the key,Why did you call the friend
+refrigerator,word,hard,refrigerator,administrator,accelerator,facilitator
+The conference call has been rescheduled,sentenceInNoise,hard,The conference call has been rescheduled,The important meeting was postponed,The business trip got cancelled,The dinner reservation was confirmed
+extraordinary,word,expert,extraordinary,inflammatory,contemporary,revolutionary
+Despite the challenging circumstances the team accomplished their objectives,sentenceInNoise,expert,Despite the challenging circumstances the team accomplished their objectives,Although the difficult conditions the group achieved their targets,Because of the tough situations the crew completed their missions,Through the hard problems the staff finished their assignments
