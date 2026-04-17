@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../auth/data/patient_profile_writer.dart';
 
 /// Port of HearifyV1/Models/TrainingModels.swift `TrainingModuleType` enum.
 enum TrainingModuleType {
@@ -25,7 +27,8 @@ enum TrainingModuleType {
         TrainingModuleType.cochlearImplants => AppTheme.success(b),
       };
 
-  static TrainingModuleType? fromRaw(String raw) {
+  static TrainingModuleType? fromRaw(String? raw) {
+    if (raw == null) return null;
     for (final t in values) {
       if (t.displayName == raw) return t;
     }
@@ -42,9 +45,11 @@ class HearingProfileState {
 }
 
 class HearingProfileController extends StateNotifier<HearingProfileState> {
-  HearingProfileController() : super(HearingProfileState.initial) {
+  HearingProfileController(this._ref) : super(HearingProfileState.initial) {
     _load();
   }
+  final Ref _ref;
+
   static const _keyType = 'userHearingType';
   static const _keyDone = 'hasCompletedHearingTypeSelection';
 
@@ -52,9 +57,32 @@ class HearingProfileController extends StateNotifier<HearingProfileState> {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_keyType);
     final done = prefs.getBool(_keyDone) ?? false;
-    final resolved = raw == null ? null : TrainingModuleType.fromRaw(raw);
+    final resolved = TrainingModuleType.fromRaw(raw);
     state = HearingProfileState(
         selected: resolved, completed: resolved != null || done);
+  }
+
+  Future<void> hydrateFromServer(String? rawType) async {
+    final resolved = TrainingModuleType.fromRaw(rawType);
+    state = HearingProfileState(
+      selected: resolved,
+      completed: resolved != null,
+    );
+    final prefs = await SharedPreferences.getInstance();
+    if (resolved != null) {
+      await prefs.setString(_keyType, resolved.displayName);
+      await prefs.setBool(_keyDone, true);
+    } else {
+      await prefs.remove(_keyType);
+      await prefs.setBool(_keyDone, false);
+    }
+  }
+
+  Future<void> clearLocal() async {
+    state = HearingProfileState.initial;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyType);
+    await prefs.remove(_keyDone);
   }
 
   Future<void> setType(TrainingModuleType t) async {
@@ -62,10 +90,14 @@ class HearingProfileController extends StateNotifier<HearingProfileState> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyType, t.displayName);
     await prefs.setBool(_keyDone, true);
+    await updatePatientFields(_ref, {
+      'hearingType': t.displayName,
+      'hearingTypeSelectedAt': Timestamp.now(),
+    });
   }
 }
 
 final hearingProfileProvider = StateNotifierProvider<HearingProfileController,
     HearingProfileState>((ref) {
-  return HearingProfileController();
+  return HearingProfileController(ref);
 });

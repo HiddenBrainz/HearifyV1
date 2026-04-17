@@ -1,10 +1,14 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../auth/data/patient_profile_writer.dart';
+
 /// Port of HearifyV1/Managers/ConsentManager.swift.
-/// Stores five consent flags in SharedPreferences plus a flow-complete flag.
+/// Stores five consent flags in SharedPreferences (device cache) AND
+/// `patients/{uid}` in Firestore (source of truth across devices).
 enum ConsentType {
   clinicalResearch('clinical_research', 'Clinical Research',
       'Allow de-identified data for research. Personal info never shared.',
@@ -29,6 +33,13 @@ enum ConsentType {
   final String title;
   final String description;
   final bool required;
+
+  static ConsentType? fromRaw(String raw) {
+    for (final t in values) {
+      if (t.raw == raw) return t;
+    }
+    return null;
+  }
 }
 
 class ConsentState {
@@ -52,9 +63,10 @@ class ConsentState {
 }
 
 class ConsentController extends StateNotifier<ConsentState> {
-  ConsentController() : super(ConsentState.initial()) {
+  ConsentController(this._ref) : super(ConsentState.initial()) {
     _load();
   }
+  final Ref _ref;
 
   static const _keyGrants = 'userConsents';
   static const _keyFlow = 'hasCompletedConsentFlow';
@@ -78,6 +90,35 @@ class ConsentController extends StateNotifier<ConsentState> {
     state = ConsentState(grants: grants, flowComplete: flow);
   }
 
+  /// Applies server-side flags on sign-in. Overwrites both the notifier
+  /// state AND the SharedPreferences cache so the device reflects the
+  /// authoritative account state.
+  Future<void> hydrateFromServer({
+    required bool flowComplete,
+    required Map<String, bool> grants,
+  }) async {
+    final mapped = <ConsentType, bool>{
+      for (final t in ConsentType.values) t: t.required,
+    };
+    for (final entry in grants.entries) {
+      final t = ConsentType.fromRaw(entry.key);
+      if (t != null) mapped[t] = entry.value;
+    }
+    state = ConsentState(grants: mapped, flowComplete: flowComplete);
+    await _persistLocal();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyFlow, flowComplete);
+  }
+
+  /// Used on sign-out to prevent leaking the previous user's flags into the
+  /// next session on the same device.
+  Future<void> clearLocal() async {
+    state = ConsentState.initial();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyGrants);
+    await prefs.remove(_keyFlow);
+  }
+
   Future<void> grant(ConsentType t) => _set(t, true);
   Future<void> revoke(ConsentType t) async {
     if (t.required) return;
@@ -87,36 +128,47 @@ class ConsentController extends StateNotifier<ConsentState> {
   Future<void> _set(ConsentType t, bool granted) async {
     final next = Map<ConsentType, bool>.from(state.grants)..[t] = granted;
     state = state.copyWith(grants: next);
-    await _persist();
+    await _persistLocal();
+    await updatePatientFields(_ref, {
+      'consents': _grantsAsRawMap(next),
+    });
   }
 
   Future<void> completeFlow() async {
     state = state.copyWith(flowComplete: true);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyFlow, true);
-    await _persist();
+    await _persistLocal();
+    await updatePatientFields(_ref, {
+      'consents': _grantsAsRawMap(state.grants),
+      'hasCompletedConsentFlow': true,
+      'consentFlowCompletedAt': Timestamp.now(),
+    });
   }
 
-  Future<void> _persist() async {
+  Future<void> _persistLocal() async {
     final prefs = await SharedPreferences.getInstance();
-    final encoded =
-        jsonEncode({for (final e in state.grants.entries) e.key.raw: e.value});
-    await prefs.setString(_keyGrants, encoded);
+    await prefs.setString(_keyGrants, jsonEncode(_grantsAsRawMap(state.grants)));
   }
+
+  Map<String, bool> _grantsAsRawMap(Map<ConsentType, bool> g) =>
+      {for (final e in g.entries) e.key.raw: e.value};
 }
 
 final consentControllerProvider =
     StateNotifierProvider<ConsentController, ConsentState>((ref) {
-  return ConsentController();
+  return ConsentController(ref);
 });
 
-/// Legal agreement (Terms + Privacy) accept flag — kept separate from consent
-/// grants because in the Swift app it's stored under a distinct UserDefaults
-/// key (`hasAgreedToLegalTerms`) and gates a different onboarding step.
+/// Legal agreement (Terms + Privacy) accept flag. Synced to Firestore so
+/// accepting on one device lets the same account skip the screen on any
+/// other device.
 class LegalAcceptanceController extends StateNotifier<bool> {
-  LegalAcceptanceController() : super(false) {
+  LegalAcceptanceController(this._ref) : super(false) {
     _load();
   }
+  final Ref _ref;
+
   static const _key = 'hasAgreedToLegalTerms';
 
   Future<void> _load() async {
@@ -124,14 +176,30 @@ class LegalAcceptanceController extends StateNotifier<bool> {
     state = prefs.getBool(_key) ?? false;
   }
 
+  Future<void> hydrateFromServer(bool accepted) async {
+    state = accepted;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, accepted);
+  }
+
+  Future<void> clearLocal() async {
+    state = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
+
   Future<void> accept() async {
     state = true;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_key, true);
+    await updatePatientFields(_ref, {
+      'hasAcceptedLegalTerms': true,
+      'legalAcceptedAt': Timestamp.now(),
+    });
   }
 }
 
 final legalAcceptanceProvider =
     StateNotifierProvider<LegalAcceptanceController, bool>((ref) {
-  return LegalAcceptanceController();
+  return LegalAcceptanceController(ref);
 });
