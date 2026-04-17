@@ -119,7 +119,7 @@ class SpeakingPracticeHubScreen extends ConsumerWidget {
   }) =>
       InkWell(
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        onTap: () => context.go(route),
+        onTap: () => context.push(route),
         child: ModernCard(
           child: Row(
             children: [
