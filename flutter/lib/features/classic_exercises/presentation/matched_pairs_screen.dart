@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/audio_service.dart';
 import '../../../shared/widgets/modern_card.dart';
-import '../../speaking_practice/data/practice_history.dart';
+import '../../../shared/data/practice_history.dart';
 import '../data/exercise_repository.dart';
 import '../domain/classic_exercise.dart';
 import '../domain/session_config.dart';

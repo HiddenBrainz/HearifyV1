@@ -7,10 +7,8 @@ import '../../features/auth/presentation/patient_login_screen.dart';
 import '../../features/classic_exercises/presentation/classic_exercises_hub_screen.dart';
 import '../../features/clinician/presentation/clinician_dashboard_screen.dart';
 import '../../features/clinician/presentation/clinician_linking_screen.dart';
-import '../../features/conversations/presentation/conversation_hub_screen.dart';
 import '../../features/education/presentation/about_screen.dart';
 import '../../features/education/presentation/legal_documents_screens.dart';
-import '../../features/education/presentation/module_program_screen.dart';
 import '../../features/hearing_tests/presentation/advanced_listening_screen.dart';
 import '../../features/hearing_tests/presentation/av_speech_test_screen.dart';
 import '../../features/onboarding/data/consent_controller.dart';
@@ -18,13 +16,7 @@ import '../../features/onboarding/data/hearing_profile_controller.dart';
 import '../../features/onboarding/presentation/data_consent_screen.dart';
 import '../../features/onboarding/presentation/hearing_type_selection_screen.dart';
 import '../../features/onboarding/presentation/legal_agreement_screen.dart';
-import '../../features/education/domain/module_program.dart';
 import '../../features/progress/presentation/progress_dashboard_screen.dart';
-import '../../features/speaking_practice/presentation/phoneme_visualization_screen.dart';
-import '../../features/speaking_practice/presentation/recording_history_screen.dart';
-import '../../features/speaking_practice/presentation/speaking_practice_hub_screen.dart';
-import '../../features/speaking_practice/presentation/speaking_practice_screen.dart';
-import '../../features/speaking_practice/presentation/targeted_practice_screen.dart';
 import '../theme/app_theme.dart';
 
 /// Routes the user through the onboarding gauntlet in the same order as
@@ -95,24 +87,6 @@ GoRouter buildRouter(Ref ref) {
         builder: (_, __) => const PrivacyPolicyScreen(),
       ),
       GoRoute(
-        path: '/education/module/:id',
-        builder: (ctx, state) {
-          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 1;
-          final profile = ref.read(hearingProfileProvider);
-          final program = id == 2
-              ? module2
-              : (profile.selected == null
-                  ? module1Default
-                  : module1For(profile.selected!));
-          return ModuleProgramScreen(
-            program: program,
-            onStartTraining: () {
-              ctx.push(id == 2 ? '/speaking' : '/listening');
-            },
-          );
-        },
-      ),
-      GoRoute(
         path: '/listening',
         builder: (_, __) => const AdvancedListeningScreen(),
       ),
@@ -121,32 +95,8 @@ GoRouter buildRouter(Ref ref) {
         builder: (_, __) => const AvSpeechTestScreen(),
       ),
       GoRoute(
-        path: '/speaking',
-        builder: (_, __) => const SpeakingPracticeHubScreen(),
-      ),
-      GoRoute(
-        path: '/speaking/practice',
-        builder: (_, __) => const SpeakingPracticeScreen(),
-      ),
-      GoRoute(
-        path: '/speaking/targeted',
-        builder: (_, __) => const TargetedPracticeScreen(),
-      ),
-      GoRoute(
-        path: '/speaking/phonemes',
-        builder: (_, __) => const PhonemeVisualizationScreen(),
-      ),
-      GoRoute(
-        path: '/speaking/history',
-        builder: (_, __) => const RecordingHistoryScreen(),
-      ),
-      GoRoute(
         path: '/classic',
         builder: (_, __) => const ClassicExercisesHubScreen(),
-      ),
-      GoRoute(
-        path: '/conversations',
-        builder: (_, __) => const ConversationHubScreen(),
       ),
       GoRoute(
         path: '/progress',
@@ -233,15 +183,6 @@ class HomeShell extends ConsumerWidget {
             const SizedBox(height: 24),
             _moduleTile(
               context,
-              title: 'Module 1 — Hearing Training',
-              subtitle: profile.selected?.displayName ?? 'Default',
-              icon: Icons.hearing,
-              onTap: () => context.push('/education/module/1'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
               title: 'Classic Exercises',
               subtitle:
                   'Matched Pairs, Word Recognition, Sentences in Noise…',
@@ -265,33 +206,6 @@ class HomeShell extends ConsumerWidget {
               subtitle: 'Compare TTS voices and speeds',
               icon: Icons.record_voice_over,
               onTap: () => context.push('/listening/voice-test'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'Module 2 — Speaking & Pronunciation',
-              subtitle: 'Speech practice with feedback',
-              icon: Icons.mic,
-              onTap: () => context.push('/education/module/2'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'Speaking Practice',
-              subtitle: 'Standard, targeted, phonemes, history',
-              icon: Icons.mic_external_on,
-              onTap: () => context.push('/speaking'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'Conversations',
-              subtitle: 'Restaurant, medical, business scenarios',
-              icon: Icons.forum_outlined,
-              onTap: () => context.push('/conversations'),
               b: b,
             ),
             const SizedBox(height: 12),

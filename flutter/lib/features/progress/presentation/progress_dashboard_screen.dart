@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/modern_card.dart';
-import '../../speaking_practice/data/practice_history.dart';
+import '../../../shared/data/practice_history.dart';
 import '../data/gamification_controller.dart';
 
 /// Port of HearifyV1/Views/ProgressDashboardView.swift +

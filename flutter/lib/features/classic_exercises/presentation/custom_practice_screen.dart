@@ -8,7 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../services/audio_service.dart';
 import '../../../services/speech_recognition_service.dart';
 import '../../../shared/widgets/modern_card.dart';
-import '../../speaking_practice/data/practice_history.dart';
+import '../../../shared/data/practice_history.dart';
 
 /// Port of HearifyV1's `customPracticeScreenContent` (ContentView.swift
 /// L2807). Lets the user maintain their own list of practice sentences/

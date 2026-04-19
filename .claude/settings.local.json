@@ -31,7 +31,8 @@
       "Bash('~/.pub-cache/bin/flutterfire' configure *)",
       "Bash(pkill -f \"flutter_tools.*chrome\")",
       "Bash(awk '{print $NF}')",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(osascript *)"
     ]
   }
 }

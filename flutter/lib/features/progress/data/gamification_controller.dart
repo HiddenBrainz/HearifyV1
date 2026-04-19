@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../speaking_practice/data/practice_history.dart';
+import '../../../shared/data/practice_history.dart';
 
 /// Slim port of HearifyV1/Managers/GamificationManager.swift. Tracks
 /// streak, level, total XP, and simple counters. The Swift version also
