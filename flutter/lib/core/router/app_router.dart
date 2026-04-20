@@ -14,8 +14,8 @@ import '../../features/hearing_tests/presentation/av_speech_test_screen.dart';
 import '../../features/onboarding/data/consent_controller.dart';
 import '../../features/onboarding/data/hearing_profile_controller.dart';
 import '../../features/onboarding/presentation/data_consent_screen.dart';
-import '../../features/onboarding/presentation/hearing_type_selection_screen.dart';
 import '../../features/onboarding/presentation/legal_agreement_screen.dart';
+import '../../features/onboarding/presentation/welcome_screen.dart';
 import '../../features/practice_list/presentation/practice_list_screen.dart';
 import '../../features/progress/presentation/progress_dashboard_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -52,8 +52,8 @@ GoRouter buildRouter(Ref ref) {
           legal &&
           consent.flowComplete &&
           !profile.completed &&
-          loc != '/onboarding/hearing-type') {
-        return '/onboarding/hearing-type';
+          loc != '/onboarding/welcome') {
+        return '/onboarding/welcome';
       }
       if (auth.isSignedIn &&
           legal &&
@@ -79,8 +79,8 @@ GoRouter buildRouter(Ref ref) {
         builder: (_, _) => const DataConsentScreen(),
       ),
       GoRoute(
-        path: '/onboarding/hearing-type',
-        builder: (_, _) => const HearingTypeSelectionScreen(),
+        path: '/onboarding/welcome',
+        builder: (_, _) => const WelcomeScreen(),
       ),
       GoRoute(path: '/about', builder: (_, _) => const AboutScreen()),
       GoRoute(

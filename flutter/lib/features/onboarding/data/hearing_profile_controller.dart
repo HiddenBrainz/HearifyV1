@@ -95,6 +95,15 @@ class HearingProfileController extends StateNotifier<HearingProfileState> {
       'hearingTypeSelectedAt': Timestamp.now(),
     });
   }
+
+  /// Marks onboarding profile complete without asking the user to pick a
+  /// training module. Used by the Welcome screen so the router guard
+  /// (`!profile.completed`) stops redirecting back to onboarding.
+  Future<void> markCompletedWithoutType() async {
+    state = const HearingProfileState(selected: null, completed: true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyDone, true);
+  }
 }
 
 final hearingProfileProvider = StateNotifierProvider<HearingProfileController,

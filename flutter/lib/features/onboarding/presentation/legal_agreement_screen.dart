@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../education/presentation/legal_documents_screens.dart';
+import '../../../core/theme/auth_design_system.dart';
+import '../../auth/presentation/widgets/gradient_primary_button.dart';
 import '../data/consent_controller.dart';
 
-/// Port of HearifyV1/Views/LegalAgreementView.swift.
-/// Requires the user to accept Terms of Service + Privacy Policy before
-/// continuing to data-consent selections.
+/// Port of HearifyV1/Views/LegalAgreementView.swift. Redesigned in the
+/// premium dark aesthetic: gradient navy background, indigo-violet logo
+/// circle, auth-card tiles for each acceptance, neon CTA.
+///
+/// Gating unchanged — both checkboxes required, Continue calls
+/// `legalAcceptanceProvider.accept()`.
 class LegalAgreementScreen extends ConsumerStatefulWidget {
   const LegalAgreementScreen({super.key});
 
@@ -25,118 +31,195 @@ class _LegalAgreementScreenState extends ConsumerState<LegalAgreementScreen> {
   @override
   Widget build(BuildContext context) {
     final b = Theme.of(context).brightness;
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundPrimary(b),
-      appBar: AppBar(
-        title: const Text('Legal Agreement'),
-        automaticallyImplyLeading: false,
+    final accent = AppTheme.primaryBlue(b);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.bgPrimary,
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Icon(Icons.gavel_outlined,
-                  color: AppTheme.primaryBlue(b), size: 56),
-              const SizedBox(height: 16),
-              Text('Before you continue',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary(b),
-                  )),
-              const SizedBox(height: 8),
-              Text(
-                'Please review and accept the Terms of Service and Privacy Policy.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.textSecondary(b),
-                ),
+      child: Scaffold(
+        backgroundColor: AppColors.bgPrimary,
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: Text(
+            'Legal Agreement',
+            style: AppTextStyles.title.copyWith(fontSize: 20),
+          ),
+          centerTitle: true,
+        ),
+        body: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: AppGradients.screenBackground,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.l,
+                AppSpacing.xl,
+                AppSpacing.l,
+                AppSpacing.l,
               ),
-              const SizedBox(height: 32),
-              _acceptRow(
-                label: 'I have read and agree to the Terms of Service',
-                value: _acceptTerms,
-                onChanged: (v) => setState(() => _acceptTerms = v ?? false),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const TermsOfServiceScreen()),
-                ),
-                b: b,
-              ),
-              const SizedBox(height: 12),
-              _acceptRow(
-                label: 'I have read and agree to the Privacy Policy',
-                value: _acceptPrivacy,
-                onChanged: (v) => setState(() => _acceptPrivacy = v ?? false),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const PrivacyPolicyScreen()),
-                ),
-                b: b,
-              ),
-              const Spacer(),
-              FilledButton(
-                onPressed: _canContinue
-                    ? () async {
-                        await ref
+              child: Column(
+                children: [
+                  const _LogoMark(icon: Icons.gavel_rounded),
+                  const SizedBox(height: AppSpacing.xl),
+                  Text(
+                    'Before you continue',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.title.copyWith(fontSize: 26),
+                  ),
+                  const SizedBox(height: AppSpacing.s),
+                  Text(
+                    'Please review and accept the Terms of Service and Privacy Policy.',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.subtitle.copyWith(fontSize: 15),
+                  ),
+                  const SizedBox(height: AppSpacing.xxxl),
+                  _LegalTile(
+                    accent: accent,
+                    label: 'I have read and agree to the Terms of Service',
+                    checked: _acceptTerms,
+                    onToggle: (v) => setState(() => _acceptTerms = v),
+                    onOpen: () => context.push('/about/terms'),
+                  ),
+                  const SizedBox(height: AppSpacing.m),
+                  _LegalTile(
+                    accent: accent,
+                    label: 'I have read and agree to the Privacy Policy',
+                    checked: _acceptPrivacy,
+                    onToggle: (v) => setState(() => _acceptPrivacy = v),
+                    onOpen: () => context.push('/about/privacy'),
+                  ),
+                  const Spacer(),
+                  GradientPrimaryButton(
+                    label: 'Continue',
+                    leadingIcon: Icons.arrow_forward_rounded,
+                    onPressed: _canContinue
+                        ? () => ref
                             .read(legalAcceptanceProvider.notifier)
-                            .accept();
-                      }
-                    : null,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  backgroundColor: AppTheme.primaryBlue(b),
-                ),
-                child: const Text('Continue',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                            .accept()
+                        : null,
+                  ),
+                  const SizedBox(height: AppSpacing.m),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _acceptRow({
-    required String label,
-    required bool value,
-    required ValueChanged<bool?> onChanged,
-    required VoidCallback onTap,
-    required Brightness b,
-  }) =>
-      Container(
-        decoration: BoxDecoration(
-          color: AppTheme.cardBackground(b),
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+class _LogoMark extends StatelessWidget {
+  const _LogoMark({required this.icon});
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 96,
+      height: 96,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppGradients.logoCircle,
+        boxShadow: AppShadows.logoCircle,
+      ),
+      child: Center(
+        child: ShaderMask(
+          shaderCallback: (rect) => AppGradients.logoMark.createShader(rect),
+          blendMode: BlendMode.srcIn,
+          child: Icon(icon, size: 48, color: Colors.white),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Row(
-          children: [
-            Checkbox(value: value, onChanged: onChanged),
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onTap,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textPrimary(b),
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.chevron_right,
-                        color: AppTheme.primaryBlue(b)),
-                  ],
-                ),
-              ),
+      ),
+    );
+  }
+}
+
+class _LegalTile extends StatelessWidget {
+  const _LegalTile({
+    required this.accent,
+    required this.label,
+    required this.checked,
+    required this.onToggle,
+    required this.onOpen,
+  });
+
+  final Color accent;
+  final String label;
+  final bool checked;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: AppGradients.authCard,
+        borderRadius: BorderRadius.circular(AppRadii.button),
+        border: Border.all(
+          color: accent.withValues(alpha: 0.45),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.18),
+            blurRadius: 20,
+            spreadRadius: -8,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadii.button),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadii.button),
+          splashColor: accent.withValues(alpha: 0.12),
+          highlightColor: accent.withValues(alpha: 0.06),
+          onTap: () => onToggle(!checked),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.m,
+              vertical: AppSpacing.s,
             ),
-          ],
+            child: Row(
+              children: [
+                Checkbox(
+                  value: checked,
+                  onChanged: (v) => onToggle(v ?? false),
+                  activeColor: accent,
+                  checkColor: Colors.white,
+                  side: BorderSide(
+                    color: accent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                const SizedBox(width: AppSpacing.s),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AppTextStyles.ctaLabel.copyWith(fontSize: 14),
+                  ),
+                ),
+                IconButton(
+                  onPressed: onOpen,
+                  icon: Icon(Icons.chevron_right, color: accent),
+                  tooltip: 'Open document',
+                ),
+              ],
+            ),
+          ),
         ),
-      );
+      ),
+    );
+  }
 }

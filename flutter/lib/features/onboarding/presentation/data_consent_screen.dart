@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/modern_card.dart';
+import '../../../core/theme/auth_design_system.dart';
+import '../../auth/presentation/widgets/gradient_primary_button.dart';
 import '../data/consent_controller.dart';
 
-/// Port of HearifyV1/Views/DataConsentView.swift.
-/// Shows one card per ConsentType with a toggle; required consents are
-/// pre-enabled and non-revokable (matching the Swift behavior).
+/// Port of HearifyV1/Views/DataConsentView.swift. Redesigned in the
+/// premium dark aesthetic. One tile per `ConsentType`; required
+/// consents keep their disabled toggle and the "REQUIRED" pill.
 class DataConsentScreen extends ConsumerWidget {
   const DataConsentScreen({super.key});
 
@@ -17,87 +19,167 @@ class DataConsentScreen extends ConsumerWidget {
     final ctl = ref.read(consentControllerProvider.notifier);
     final b = Theme.of(context).brightness;
 
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundPrimary(b),
-      appBar: AppBar(
-        title: const Text('Data & Privacy'),
-        automaticallyImplyLeading: false,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.bgPrimary,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _header(b),
-                  const SizedBox(height: AppTheme.spacingL),
-                  ...ConsentType.values.map((t) => Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: AppTheme.spacingM),
-                        child: _consentCard(
-                          type: t,
-                          granted: state.isGranted(t),
-                          onChanged: (v) => v
-                              ? ctl.grant(t)
-                              : ctl.revoke(t),
-                          b: b,
+      child: Scaffold(
+        backgroundColor: AppColors.bgPrimary,
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: Text(
+            'Data & Privacy',
+            style: AppTextStyles.title.copyWith(fontSize: 20),
+          ),
+          centerTitle: true,
+        ),
+        body: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: AppGradients.screenBackground,
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.l,
+                      AppSpacing.xl,
+                      AppSpacing.l,
+                      AppSpacing.l,
+                    ),
+                    children: [
+                      const _Header(),
+                      const SizedBox(height: AppSpacing.xxl),
+                      for (final t in ConsentType.values)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              bottom: AppSpacing.m),
+                          child: _ConsentTile(
+                            type: t,
+                            granted: state.isGranted(t),
+                            accent: t.required
+                                ? AppTheme.error(b)
+                                : AppTheme.accentPurple(b),
+                            onChanged: (v) =>
+                                v ? ctl.grant(t) : ctl.revoke(t),
+                          ),
                         ),
-                      )),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: FilledButton(
-                onPressed: () => ctl.completeFlow(),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  backgroundColor: AppTheme.primaryBlue(b),
+                    ],
+                  ),
                 ),
-                child: const Text('Continue',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.l,
+                    AppSpacing.s,
+                    AppSpacing.l,
+                    AppSpacing.m,
+                  ),
+                  child: GradientPrimaryButton(
+                    label: 'Continue',
+                    leadingIcon: Icons.arrow_forward_rounded,
+                    onPressed: () => ctl.completeFlow(),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _header(Brightness b) => Column(
-        children: [
-          Icon(Icons.privacy_tip_outlined,
-              size: 56, color: AppTheme.primaryBlue(b)),
-          const SizedBox(height: 12),
-          Text('Your Data, Your Choice',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary(b),
-              )),
-          const SizedBox(height: 6),
-          Text(
-            'Choose which data you want to share. Required items keep core '
-            'features working; optional items help us improve and support '
-            'research. You can change these any time in Settings.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary(b),
+class _Header extends StatelessWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 96,
+          height: 96,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: AppGradients.logoCircle,
+            boxShadow: AppShadows.logoCircle,
+          ),
+          child: Center(
+            child: ShaderMask(
+              shaderCallback: (rect) =>
+                  AppGradients.logoMark.createShader(rect),
+              blendMode: BlendMode.srcIn,
+              child: const Icon(
+                Icons.privacy_tip_outlined,
+                size: 48,
+                color: Colors.white,
+              ),
             ),
           ),
-        ],
-      );
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Text(
+          'Your Data, Your Choice',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.title.copyWith(fontSize: 26),
+        ),
+        const SizedBox(height: AppSpacing.s),
+        Text(
+          'Choose which data you want to share. Required items keep core '
+          'features working; optional items help us improve and support '
+          'research. You can change these any time in Settings.',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.subtitle.copyWith(fontSize: 14, height: 1.4),
+        ),
+      ],
+    );
+  }
+}
 
-  Widget _consentCard({
-    required ConsentType type,
-    required bool granted,
-    required ValueChanged<bool> onChanged,
-    required Brightness b,
-  }) =>
-      ModernCard(
+class _ConsentTile extends StatelessWidget {
+  const _ConsentTile({
+    required this.type,
+    required this.granted,
+    required this.accent,
+    required this.onChanged,
+  });
+
+  final ConsentType type;
+  final bool granted;
+  final Color accent;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: AppGradients.authCard,
+        borderRadius: BorderRadius.circular(AppRadii.button),
+        border: Border.all(
+          color: accent.withValues(alpha: 0.45),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.16),
+            blurRadius: 20,
+            spreadRadius: -8,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.l,
+          vertical: AppSpacing.l,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -107,48 +189,76 @@ class DataConsentScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Text(type.title,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary(b),
-                          )),
-                      if (type.required) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryBlue(b)
-                                .withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('REQUIRED',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryBlue(b),
-                              )),
+                      Flexible(
+                        child: Text(
+                          type.title,
+                          style: AppTextStyles.ctaLabel.copyWith(fontSize: 16),
                         ),
+                      ),
+                      if (type.required) ...[
+                        const SizedBox(width: AppSpacing.s),
+                        _RequiredBadge(accent: accent),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(type.description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textSecondary(b),
-                        height: 1.4,
-                      )),
+                  const SizedBox(height: AppSpacing.s),
+                  Text(
+                    type.description,
+                    style: AppTextStyles.inputLabel.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.m),
             Switch(
               value: granted,
               onChanged: type.required ? null : onChanged,
+              activeThumbColor: Colors.white,
+              activeTrackColor: accent,
+              inactiveThumbColor: AppColors.textInactive,
+              inactiveTrackColor: AppColors.inputBackground,
+              trackOutlineColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.selected)
+                    ? accent
+                    : AppColors.hairline,
+              ),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
+}
+
+class _RequiredBadge extends StatelessWidget {
+  const _RequiredBadge({required this.accent});
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(
+          color: accent.withValues(alpha: 0.4),
+          width: 0.8,
+        ),
+      ),
+      child: Text(
+        'REQUIRED',
+        style: AppTextStyles.ctaLabel.copyWith(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: accent,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
 }

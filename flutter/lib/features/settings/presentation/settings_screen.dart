@@ -65,14 +65,6 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Generate a link code',
                   onTap: () => context.push('/clinician/link'),
                 ),
-                const SizedBox(height: AppSpacing.m),
-                _SettingsTile(
-                  icon: Icons.medical_information_outlined,
-                  accent: AppTheme.accentPurple(b),
-                  title: 'Clinician Dashboard',
-                  subtitle: 'For audiologists — view linked patients',
-                  onTap: () => context.push('/clinician/dashboard'),
-                ),
                 const SizedBox(height: AppSpacing.xl),
                 _SettingsTile(
                   icon: Icons.logout,
