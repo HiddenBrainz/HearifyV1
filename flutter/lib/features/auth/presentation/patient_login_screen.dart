@@ -1,16 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/firebase/firebase_bootstrap.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/auth_design_system.dart';
 import '../data/auth_controller.dart';
+import 'widgets/auth_card_container.dart';
+import 'widgets/auth_segmented_toggle.dart';
+import 'widgets/branding_header.dart';
+import 'widgets/gradient_primary_button.dart';
+import 'widgets/hearify_text_field.dart';
 
-/// Port of HearifyV1/Views/PatientLoginView.swift.
-/// Segmented Sign In / Sign Up, email+password form, surfaces Firebase errors
-/// inline. If Firebase is not wired yet, an explanatory banner is shown and
-/// the submit button is disabled.
+/// Premium dark auth screen: branded header, segmented Sign In / Sign Up,
+/// email + password form, gradient CTA. Retains the original Firebase
+/// auth wiring and debug guest shortcut.
 class PatientLoginScreen extends ConsumerStatefulWidget {
   const PatientLoginScreen({super.key});
 
@@ -22,9 +27,12 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _name = TextEditingController();
-  bool _isSignUp = false;
+
+  int _segment = 0;
   bool _busy = false;
   String? _error;
+
+  bool get _isSignUp => _segment == 1;
 
   @override
   void dispose() {
@@ -36,120 +44,58 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final b = Theme.of(context).brightness;
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: AppTheme.primaryGradient(b)),
-        child: SafeArea(
-          child: Center(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.bgPrimary,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.bgPrimary,
+        body: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: AppGradients.screenBackground,
+          ),
+          child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xxl,
+                AppSpacing.huge,
+                AppSpacing.xxl,
+                AppSpacing.xxl,
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
-                  _logo(),
-                  const SizedBox(height: 32),
-                  Card(
-                    elevation: 12,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          SegmentedButton<bool>(
-                            segments: const [
-                              ButtonSegment(value: false, label: Text('Sign In')),
-                              ButtonSegment(value: true, label: Text('Sign Up')),
-                            ],
-                            selected: {_isSignUp},
-                            onSelectionChanged: (s) =>
-                                setState(() => _isSignUp = s.first),
-                          ),
-                          const SizedBox(height: 20),
-                          if (_isSignUp) ...[
-                            TextField(
-                              controller: _name,
-                              decoration: const InputDecoration(
-                                labelText: 'Full name',
-                                prefixIcon: Icon(Icons.person_outline),
-                                border: OutlineInputBorder(),
-                              ),
-                              textInputAction: TextInputAction.next,
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                          TextField(
-                            controller: _email,
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              prefixIcon: Icon(Icons.email_outlined),
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _password,
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Password',
-                              prefixIcon: Icon(Icons.lock_outline),
-                              border: OutlineInputBorder(),
-                            ),
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => _submit(),
-                          ),
-                          if (_error != null) ...[
-                            const SizedBox(height: 12),
-                            Text(_error!,
-                                style: TextStyle(
-                                    color: AppTheme.error(b), fontSize: 13)),
-                          ],
-                          const SizedBox(height: 20),
-                          FilledButton(
-                            onPressed: _busy ? null : _submit,
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              backgroundColor: AppTheme.primaryBlue(b),
-                            ),
-                            child: _busy
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2))
-                                : Text(_isSignUp ? 'Create Account' : 'Sign In'),
-                          ),
-                          if (kDebugMode && !FirebaseBootstrap.initialized) ...[
-                            const SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(44),
-                              ),
-                              onPressed: () => ref
-                                  .read(authControllerProvider.notifier)
-                                  .debugSignInAsGuest(),
-                              icon: const Icon(Icons.developer_mode, size: 18),
-                              label: const Text('Continue as guest (Dev)'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                'Firebase not configured — shown in debug builds only.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.textTertiary(b),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                  const SizedBox(height: AppSpacing.huge),
+                  const BrandingHeader(
+                    title: 'HearifyV1',
+                    subtitle: 'Auditory Rehabilitation',
+                  ),
+                  const SizedBox(height: AppSpacing.huge),
+                  _AuthForm(
+                    segment: _segment,
+                    isSignUp: _isSignUp,
+                    email: _email,
+                    password: _password,
+                    name: _name,
+                    busy: _busy,
+                    error: _error,
+                    onSegmentChanged: (i) => setState(() {
+                      _segment = i;
+                      _error = null;
+                    }),
+                    onSubmit: _submit,
+                    onHelperLinkTap: () => setState(() {
+                      _segment = _isSignUp ? 0 : 1;
+                      _error = null;
+                    }),
+                    onGuest: (kDebugMode && !FirebaseBootstrap.initialized)
+                        ? () => ref
+                            .read(authControllerProvider.notifier)
+                            .debugSignInAsGuest()
+                        : null,
                   ),
                 ],
               ),
@@ -160,30 +106,8 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
     );
   }
 
-  Widget _logo() => Column(
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.hearing, color: Colors.white, size: 70),
-          ),
-          const SizedBox(height: 16),
-          const Text('Hearify',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              )),
-          const Text('Auditory Rehabilitation',
-              style: TextStyle(fontSize: 16, color: Colors.white70)),
-        ],
-      );
-
   Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
     setState(() {
       _error = null;
       _busy = true;
@@ -209,5 +133,144 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+}
+
+class _AuthForm extends StatelessWidget {
+  const _AuthForm({
+    required this.segment,
+    required this.isSignUp,
+    required this.email,
+    required this.password,
+    required this.name,
+    required this.busy,
+    required this.error,
+    required this.onSegmentChanged,
+    required this.onSubmit,
+    required this.onHelperLinkTap,
+    required this.onGuest,
+  });
+
+  final int segment;
+  final bool isSignUp;
+  final TextEditingController email;
+  final TextEditingController password;
+  final TextEditingController name;
+  final bool busy;
+  final String? error;
+  final ValueChanged<int> onSegmentChanged;
+  final VoidCallback onSubmit;
+  final VoidCallback onHelperLinkTap;
+  final VoidCallback? onGuest;
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthCardContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AuthSegmentedToggle(
+            labels: const ['Sign In', 'Sign Up'],
+            selectedIndex: segment,
+            onChanged: onSegmentChanged,
+          ),
+          const SizedBox(height: AppSpacing.xxxl),
+          if (isSignUp) ...[
+            HearifyTextField(
+              label: 'Full Name',
+              controller: name,
+              placeholder: 'Jane Doe',
+              textInputAction: TextInputAction.next,
+              keyboardType: TextInputType.name,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+          ],
+          HearifyTextField(
+            label: 'Email',
+            controller: email,
+            placeholder: 'email@example.com',
+            placeholderStyle: AppTextStyles.emailPlaceholder,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            autocorrect: false,
+            enableSuggestions: false,
+            inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          HearifyTextField(
+            label: 'Password',
+            controller: password,
+            placeholder: '••••••••',
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            autocorrect: false,
+            enableSuggestions: false,
+            onSubmitted: (_) => onSubmit(),
+          ),
+          if (error != null) ...[
+            const SizedBox(height: AppSpacing.l),
+            Text(error!, style: AppTextStyles.error),
+          ],
+          const SizedBox(height: AppSpacing.xxxl),
+          GradientPrimaryButton(
+            label: isSignUp ? 'Create Account' : 'Sign In',
+            leadingIcon: isSignUp
+                ? Icons.person_add_alt_1_rounded
+                : Icons.lock_open_rounded,
+            loading: busy,
+            onPressed: busy ? null : onSubmit,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Center(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onHelperLinkTap,
+              child: Text.rich(
+                TextSpan(
+                  style: AppTextStyles.helperLink.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: isSignUp
+                          ? 'Already have an account? '
+                          : "Don't have an account? ",
+                    ),
+                    TextSpan(
+                      text: isSignUp ? 'Sign In' : 'Sign Up',
+                      style: AppTextStyles.helperLink,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (onGuest != null) ...[
+            const SizedBox(height: AppSpacing.l),
+            Center(
+              child: TextButton.icon(
+                onPressed: onGuest,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textInactive,
+                ),
+                icon: const Icon(Icons.developer_mode_rounded, size: 18),
+                label: const Text('Continue as guest (Dev)'),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(
+                'Firebase not configured — debug builds only.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.inputLabel.copyWith(
+                  fontSize: 11,
+                  color: AppColors.textPlaceholder,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
