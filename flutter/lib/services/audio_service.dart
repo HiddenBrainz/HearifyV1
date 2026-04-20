@@ -57,6 +57,12 @@ class AudioService extends ChangeNotifier {
       _isSpeaking = false;
       notifyListeners();
       _completeSpeech(false);
+      // On web, calling `cancel()` immediately before `speak()` fires an
+      // `interrupted` / `canceled` SpeechSynthesisErrorEvent — that's our
+      // own teardown, not a real failure. Keep the console clean.
+      final s = (msg ?? '').toString().toLowerCase();
+      if (s.contains('interrupt') || s.contains('cancel')) return;
+      if (kDebugMode) debugPrint('TTS error: $msg');
     });
     _initialized = true;
   }
@@ -79,17 +85,35 @@ class AudioService extends ChangeNotifier {
     if (clean.isEmpty) return false;
     final completer = Completer<bool>();
     _speechCompleter = completer;
-    await _tts.speak(clean);
+    try {
+      await _tts.speak(clean);
+    } catch (e) {
+      // flutter_tts_web rethrows the underlying SpeechSynthesisErrorEvent
+      // from its internal speak-completer. The error handler above has
+      // already flipped state and completed `_speechCompleter`; we just
+      // need to swallow the throw so it doesn't bubble as unhandled.
+      _completeSpeech(false);
+      if (kDebugMode) debugPrint('TTS speak threw: $e');
+      return false;
+    }
     return completer.future;
   }
 
   Future<void> stop() async {
     await _ensureInit();
-    if (_isSpeaking) {
-      await _tts.stop();
-      _isSpeaking = false;
-      _completeSpeech(false);
-      notifyListeners();
+    // Always ask the engine to stop — `_isSpeaking` only flips true after
+    // the start handler fires, so gating on it would skip cancelling an
+    // utterance that's still queued.
+    await _tts.stop();
+    final wasSpeaking = _isSpeaking;
+    _isSpeaking = false;
+    _completeSpeech(false);
+    if (wasSpeaking) notifyListeners();
+    if (kIsWeb) {
+      // Yield so the browser actually processes the cancel before the
+      // next `speak()` enqueues. Prevents the SpeechSynthesisErrorEvent
+      // 'interrupted' race that otherwise fires on every replay / next.
+      await Future<void>.delayed(Duration.zero);
     }
   }
 
