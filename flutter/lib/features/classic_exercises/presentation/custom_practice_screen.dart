@@ -65,10 +65,17 @@ class _CustomPracticeScreenState extends ConsumerState<CustomPracticeScreen> {
   final _input = TextEditingController();
 
   @override
-  void dispose() {
-    _input.dispose();
+  void deactivate() {
+    // `ref` is invalid once `dispose()` runs, so tear down audio/STT
+    // here while the element is still mounted.
     ref.read(audioServiceProvider).stop();
     ref.read(sttServiceProvider).cancel();
+    super.deactivate();
+  }
+
+  @override
+  void dispose() {
+    _input.dispose();
     super.dispose();
   }
 

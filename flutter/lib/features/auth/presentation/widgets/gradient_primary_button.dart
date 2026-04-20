@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/auth_design_system.dart';
 
-/// Wide pill CTA painted with the neon blue→purple→magenta gradient.
-/// Supports a leading icon, a loading state, and a disabled state
-/// (which desaturates the gradient and suppresses shadow glow).
+/// Wide pill CTA painted with a horizontal gradient. Defaults to the
+/// neon blue→purple→magenta accent but accepts any [Gradient] so
+/// callers can reuse the shape with a different brand ramp (e.g.
+/// `AppTheme.accentGradient`). Supports a leading icon, a loading
+/// state, and a disabled state (which fades the gradient and
+/// suppresses the shadow glow).
 class GradientPrimaryButton extends StatelessWidget {
   const GradientPrimaryButton({
     super.key,
@@ -13,6 +16,7 @@ class GradientPrimaryButton extends StatelessWidget {
     this.leadingIcon,
     this.loading = false,
     this.height = 58,
+    this.gradient,
   });
 
   final String label;
@@ -20,6 +24,7 @@ class GradientPrimaryButton extends StatelessWidget {
   final IconData? leadingIcon;
   final bool loading;
   final double height;
+  final Gradient? gradient;
 
   bool get _enabled => onPressed != null && !loading;
 
@@ -30,7 +35,7 @@ class GradientPrimaryButton extends StatelessWidget {
       child: Container(
         height: height,
         decoration: BoxDecoration(
-          gradient: AppGradients.primaryCta,
+          gradient: gradient ?? AppGradients.primaryCta,
           borderRadius: BorderRadius.circular(AppRadii.button),
           boxShadow: _enabled ? AppShadows.ctaButton : const [],
         ),

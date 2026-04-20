@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/data/auth_controller.dart';
 import '../../features/auth/presentation/patient_login_screen.dart';
-import '../../features/classic_exercises/presentation/classic_exercises_hub_screen.dart';
+import '../../features/classic_exercises/presentation/training_categories_screen.dart';
 import '../../features/clinician/presentation/clinician_dashboard_screen.dart';
 import '../../features/clinician/presentation/clinician_linking_screen.dart';
 import '../../features/education/presentation/about_screen.dart';
@@ -16,14 +16,16 @@ import '../../features/onboarding/data/hearing_profile_controller.dart';
 import '../../features/onboarding/presentation/data_consent_screen.dart';
 import '../../features/onboarding/presentation/hearing_type_selection_screen.dart';
 import '../../features/onboarding/presentation/legal_agreement_screen.dart';
+import '../../features/practice_list/presentation/practice_list_screen.dart';
 import '../../features/progress/presentation/progress_dashboard_screen.dart';
-import '../theme/app_theme.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 
 /// Routes the user through the onboarding gauntlet in the same order as
 /// HearifyV1App.swift: Login → Legal → Data Consent → Hearing Type → Home.
 ///
 /// Each guard reads the corresponding provider so skipping a completed step
-/// is automatic on relaunch.
+/// is automatic on relaunch. Home (`/`) is the Training Categories landing;
+/// the former `/classic` hub collapsed into it and now redirects there.
 GoRouter buildRouter(Ref ref) {
   return GoRouter(
     initialLocation: '/',
@@ -63,52 +65,61 @@ GoRouter buildRouter(Ref ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (_, __) => const HomeShell()),
-      GoRoute(path: '/login', builder: (_, __) => const PatientLoginScreen()),
+      GoRoute(
+        path: '/',
+        builder: (_, _) => const TrainingCategoriesScreen(),
+      ),
+      GoRoute(path: '/login', builder: (_, _) => const PatientLoginScreen()),
       GoRoute(
         path: '/onboarding/legal',
-        builder: (_, __) => const LegalAgreementScreen(),
+        builder: (_, _) => const LegalAgreementScreen(),
       ),
       GoRoute(
         path: '/onboarding/consent',
-        builder: (_, __) => const DataConsentScreen(),
+        builder: (_, _) => const DataConsentScreen(),
       ),
       GoRoute(
         path: '/onboarding/hearing-type',
-        builder: (_, __) => const HearingTypeSelectionScreen(),
+        builder: (_, _) => const HearingTypeSelectionScreen(),
       ),
-      GoRoute(path: '/about', builder: (_, __) => const AboutScreen()),
+      GoRoute(path: '/about', builder: (_, _) => const AboutScreen()),
       GoRoute(
         path: '/about/terms',
-        builder: (_, __) => const TermsOfServiceScreen(),
+        builder: (_, _) => const TermsOfServiceScreen(),
       ),
       GoRoute(
         path: '/about/privacy',
-        builder: (_, __) => const PrivacyPolicyScreen(),
+        builder: (_, _) => const PrivacyPolicyScreen(),
       ),
       GoRoute(
         path: '/listening',
-        builder: (_, __) => const AdvancedListeningScreen(),
+        builder: (_, _) => const AdvancedListeningScreen(),
       ),
       GoRoute(
         path: '/listening/voice-test',
-        builder: (_, __) => const AvSpeechTestScreen(),
+        builder: (_, _) => const AvSpeechTestScreen(),
       ),
-      GoRoute(
-        path: '/classic',
-        builder: (_, __) => const ClassicExercisesHubScreen(),
-      ),
+      // Preserve old deep links: /classic now folds into the home grid.
+      GoRoute(path: '/classic', redirect: (_, _) => '/'),
       GoRoute(
         path: '/progress',
-        builder: (_, __) => const ProgressDashboardScreen(),
+        builder: (_, _) => const ProgressDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/practice-list',
+        builder: (_, _) => const PracticeListScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (_, _) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/clinician/link',
-        builder: (_, __) => const ClinicianLinkingScreen(),
+        builder: (_, _) => const ClinicianLinkingScreen(),
       ),
       GoRoute(
         path: '/clinician/dashboard',
-        builder: (_, __) => const ClinicianDashboardScreen(),
+        builder: (_, _) => const ClinicianDashboardScreen(),
       ),
     ],
   );
@@ -117,10 +128,10 @@ GoRouter buildRouter(Ref ref) {
 class _RouterRefresh extends ChangeNotifier {
   _RouterRefresh(this._ref) {
     _sub = <ProviderSubscription>[
-      _ref.listen(authControllerProvider, (_, __) => notifyListeners()),
-      _ref.listen(legalAcceptanceProvider, (_, __) => notifyListeners()),
-      _ref.listen(consentControllerProvider, (_, __) => notifyListeners()),
-      _ref.listen(hearingProfileProvider, (_, __) => notifyListeners()),
+      _ref.listen(authControllerProvider, (_, _) => notifyListeners()),
+      _ref.listen(legalAcceptanceProvider, (_, _) => notifyListeners()),
+      _ref.listen(consentControllerProvider, (_, _) => notifyListeners()),
+      _ref.listen(hearingProfileProvider, (_, _) => notifyListeners()),
     ];
   }
 
@@ -134,122 +145,4 @@ class _RouterRefresh extends ChangeNotifier {
     }
     super.dispose();
   }
-}
-
-/// Placeholder home — feature phases 4-9 slot their content here.
-class HomeShell extends ConsumerWidget {
-  const HomeShell({super.key});
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final b = Theme.of(context).brightness;
-    final profile = ref.watch(hearingProfileProvider);
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundPrimary(b),
-      appBar: AppBar(
-        title: const Text('Hearify'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () => context.push('/about'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () =>
-                ref.read(authControllerProvider.notifier).signOut(),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(
-              'Welcome${profile.selected != null ? ' — ${profile.selected!.displayName} track' : ''}',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary(b),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _moduleTile(
-              context,
-              title: 'Classic Exercises',
-              subtitle:
-                  'Matched Pairs, Word Recognition, Sentences in Noise…',
-              icon: Icons.view_module,
-              onTap: () => context.push('/classic'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'Progress',
-              subtitle: 'Streak, level, accuracy, achievements',
-              icon: Icons.insights,
-              onTap: () => context.push('/progress'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'Share with Clinician',
-              subtitle: 'Generate a link code',
-              icon: Icons.share,
-              onTap: () => context.push('/clinician/link'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'Clinician Dashboard',
-              subtitle: 'For audiologists — view linked patients',
-              icon: Icons.medical_information_outlined,
-              onTap: () => context.push('/clinician/dashboard'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'About Hearify',
-              subtitle: 'Version, legal, credits',
-              icon: Icons.info_outline,
-              onTap: () => context.push('/about'),
-              b: b,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _moduleTile(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required VoidCallback onTap,
-    required Brightness b,
-  }) =>
-      Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        ),
-        color: AppTheme.cardBackground(b),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: AppTheme.primaryBlue(b).withValues(alpha: 0.15),
-            child: Icon(icon, color: AppTheme.primaryBlue(b)),
-          ),
-          title: Text(title,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary(b),
-              )),
-          subtitle: Text(subtitle,
-              style: TextStyle(color: AppTheme.textSecondary(b))),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: onTap,
-        ),
-      );
 }

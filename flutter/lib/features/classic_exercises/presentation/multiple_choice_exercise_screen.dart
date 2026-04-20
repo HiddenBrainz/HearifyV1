@@ -54,10 +54,13 @@ class _MultipleChoiceExerciseScreenState
   }
 
   @override
-  void dispose() {
-    ref.read(audioServiceProvider).stop();
-    ref.read(audioServiceProvider).stopBackgroundNoise();
-    super.dispose();
+  void deactivate() {
+    // `ref` is invalid once `dispose()` runs, so tear down audio here
+    // while the element is still mounted.
+    final audio = ref.read(audioServiceProvider);
+    audio.stop();
+    audio.stopBackgroundNoise();
+    super.deactivate();
   }
 
   Future<void> _load() async {

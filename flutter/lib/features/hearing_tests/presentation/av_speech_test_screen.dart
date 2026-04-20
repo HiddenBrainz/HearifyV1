@@ -38,9 +38,16 @@ class _AvSpeechTestScreenState extends ConsumerState<AvSpeechTestScreen> {
   }
 
   @override
+  void deactivate() {
+    // `ref` is invalid once `dispose()` runs, so stop audio here
+    // while the element is still mounted.
+    ref.read(audioServiceProvider).stop();
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
     _custom.dispose();
-    ref.read(audioServiceProvider).stop();
     super.dispose();
   }
 

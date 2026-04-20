@@ -43,9 +43,11 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   }
 
   @override
-  void dispose() {
+  void deactivate() {
+    // `ref` is invalid once `dispose()` runs, so tear down audio here
+    // while the element is still mounted.
     ref.read(audioServiceProvider).stop();
-    super.dispose();
+    super.deactivate();
   }
 
   Future<void> _load() async {
