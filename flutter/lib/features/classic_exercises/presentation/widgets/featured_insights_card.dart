@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/auth_design_system.dart';
 
 /// Full-width featured card shown below the category grid. Uses the
@@ -23,8 +22,9 @@ class FeaturedInsightsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final b = Theme.of(context).brightness;
-    final accent = AppTheme.accentPurple(b);
+    // Brand violet from the auth CTA gradient — matches the Custom
+    // Practice grid tile so both purples read identically.
+    const accent = AppColors.gradientPurple;
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: AppGradients.authCard,

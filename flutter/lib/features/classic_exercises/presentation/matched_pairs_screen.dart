@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   String? _selected;
   bool _revealed = false;
   String? _categoryFilter;
+  Timer? _autoAdvance;
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   void deactivate() {
     // `ref` is invalid once `dispose()` runs, so tear down audio here
     // while the element is still mounted.
+    _autoAdvance?.cancel();
     ref.read(audioServiceProvider).stop();
     super.deactivate();
   }
@@ -107,9 +110,18 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
             timestamp: DateTime.now(),
           ),
         );
+    if (isCorrect) {
+      // Let the green check read for a beat, then move on automatically.
+      _autoAdvance?.cancel();
+      _autoAdvance = Timer(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        _next();
+      });
+    }
   }
 
   void _next() {
+    _autoAdvance?.cancel();
     if (_index >= _session.length - 1) {
       _showSummary();
       return;
@@ -123,6 +135,7 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   }
 
   void _startNewSession() {
+    _autoAdvance?.cancel();
     setState(() {
       _session = _drawSession();
       _index = 0;
@@ -134,6 +147,7 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   }
 
   Future<void> _endEarly() async {
+    _autoAdvance?.cancel();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(

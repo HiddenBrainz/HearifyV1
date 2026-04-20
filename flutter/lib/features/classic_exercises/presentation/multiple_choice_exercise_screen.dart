@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -46,6 +47,7 @@ class _MultipleChoiceExerciseScreenState
   String? _selected;
   bool _revealed = false;
   List<String> _shuffledChoices = const [];
+  Timer? _autoAdvance;
 
   @override
   void initState() {
@@ -57,6 +59,7 @@ class _MultipleChoiceExerciseScreenState
   void deactivate() {
     // `ref` is invalid once `dispose()` runs, so tear down audio here
     // while the element is still mounted.
+    _autoAdvance?.cancel();
     final audio = ref.read(audioServiceProvider);
     audio.stop();
     audio.stopBackgroundNoise();
@@ -121,9 +124,18 @@ class _MultipleChoiceExerciseScreenState
             timestamp: DateTime.now(),
           ),
         );
+    if (isCorrect) {
+      // Let the green check read for a beat, then move on automatically.
+      _autoAdvance?.cancel();
+      _autoAdvance = Timer(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        _next();
+      });
+    }
   }
 
   void _next() {
+    _autoAdvance?.cancel();
     if (_index >= _session.length - 1) {
       _showSummary();
       return;
@@ -138,6 +150,7 @@ class _MultipleChoiceExerciseScreenState
   }
 
   void _startNewSession() {
+    _autoAdvance?.cancel();
     setState(() {
       _session = _drawSession(_pool);
       _index = 0;
@@ -150,6 +163,7 @@ class _MultipleChoiceExerciseScreenState
   }
 
   Future<void> _endEarly() async {
+    _autoAdvance?.cancel();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(

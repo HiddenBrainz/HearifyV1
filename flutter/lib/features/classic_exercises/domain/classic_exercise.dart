@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/auth_design_system.dart';
 
 /// Port of HearifyV1/Models/TestModels.swift `TrainingCategory`.
 enum ClassicExerciseCategory {
@@ -30,7 +31,9 @@ enum ClassicExerciseCategory {
           AppTheme.accentOrange(b),
         ClassicExerciseCategory.sentencesInNoise => AppTheme.warning(b),
         ClassicExerciseCategory.diagnosticTest => AppTheme.error(b),
-        ClassicExerciseCategory.customPractice => AppTheme.accentPurple(b),
+        // Brand violet from the auth CTA gradient — keeps Custom Practice
+        // in sync with the Practice Insights featured card.
+        ClassicExerciseCategory.customPractice => AppColors.gradientPurple,
       };
 }
 
