@@ -81,6 +81,14 @@ class AudioService extends ChangeNotifier {
   Future<bool> speak(String text) async {
     await _ensureInit();
     await stop();
+    if (kIsWeb) {
+      // Chrome's SpeechSynthesis queue needs a real timer tick between
+      // `cancel()` (fired from `stop()` above) and the next `speak()`.
+      // Without this gap the new utterance fires a stray
+      // `SpeechSynthesisErrorEvent('interrupted')`. A microtask yield
+      // (`Duration.zero`) is not enough — use a short real delay.
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+    }
     final clean = _cleanName(text);
     if (clean.isEmpty) return false;
     final completer = Completer<bool>();
@@ -109,12 +117,6 @@ class AudioService extends ChangeNotifier {
     _isSpeaking = false;
     _completeSpeech(false);
     if (wasSpeaking) notifyListeners();
-    if (kIsWeb) {
-      // Yield so the browser actually processes the cancel before the
-      // next `speak()` enqueues. Prevents the SpeechSynthesisErrorEvent
-      // 'interrupted' race that otherwise fires on every replay / next.
-      await Future<void>.delayed(Duration.zero);
-    }
   }
 
   Future<void> setVolume(double v) async {
