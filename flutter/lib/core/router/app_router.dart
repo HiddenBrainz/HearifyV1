@@ -171,15 +171,6 @@ class HomeShell extends ConsumerWidget {
                 color: AppTheme.textPrimary(b),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Phases 1-3 ported (foundation, auth/onboarding, education, shared UI). '
-              'Hearing tests, speaking practice, conversations, and progress come next.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary(b),
-              ),
-            ),
             const SizedBox(height: 24),
             _moduleTile(
               context,
@@ -188,24 +179,6 @@ class HomeShell extends ConsumerWidget {
                   'Matched Pairs, Word Recognition, Sentences in Noise…',
               icon: Icons.view_module,
               onTap: () => context.push('/classic'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'Listening Practice',
-              subtitle: 'Advanced listening exercises',
-              icon: Icons.headphones,
-              onTap: () => context.push('/listening'),
-              b: b,
-            ),
-            const SizedBox(height: 12),
-            _moduleTile(
-              context,
-              title: 'Voice Test',
-              subtitle: 'Compare TTS voices and speeds',
-              icon: Icons.record_voice_over,
-              onTap: () => context.push('/listening/voice-test'),
               b: b,
             ),
             const SizedBox(height: 12),
