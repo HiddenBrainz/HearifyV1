@@ -327,15 +327,6 @@ class _MultipleChoiceExerciseScreenState
                       fontSize: 13,
                       color: AppTheme.textSecondary(b),
                     )),
-                if (widget.backgroundNoiseVolume != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                      'Background noise is on at ${(widget.backgroundNoiseVolume! * 100).round()}%',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.warning(b),
-                      )),
-                ],
                 const SizedBox(height: 12),
                 FilledButton.tonalIcon(
                   onPressed:
@@ -343,6 +334,10 @@ class _MultipleChoiceExerciseScreenState
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Play'),
                 ),
+                if (widget.backgroundNoiseVolume != null) ...[
+                  const SizedBox(height: AppTheme.spacingM),
+                  _NoiseSlider(audio: audio, accent: color),
+                ],
               ],
             ),
           ),
@@ -419,3 +414,63 @@ class _MultipleChoiceExerciseScreenState
 }
 
 enum _SummaryAction { done, another }
+
+class _NoiseSlider extends StatelessWidget {
+  const _NoiseSlider({required this.audio, required this.accent});
+
+  final AudioService audio;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+    final pct = (audio.backgroundNoiseVolume * 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.graphic_eq_rounded,
+                size: 16, color: AppTheme.warning(b)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Background noise',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textSecondary(b),
+                ),
+              ),
+            ),
+            Text(
+              '$pct%',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.warning(b),
+              ),
+            ),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: AppTheme.warning(b),
+            inactiveTrackColor: AppTheme.warning(b).withValues(alpha: 0.2),
+            thumbColor: AppTheme.warning(b),
+            overlayColor: AppTheme.warning(b).withValues(alpha: 0.2),
+            trackHeight: 3,
+          ),
+          child: Slider(
+            value: audio.backgroundNoiseVolume.clamp(0.0, 1.0),
+            min: 0.0,
+            max: 1.0,
+            divisions: 20,
+            label: '$pct%',
+            onChanged: (v) => audio.setBackgroundNoiseVolume(v),
+          ),
+        ),
+      ],
+    );
+  }
+}

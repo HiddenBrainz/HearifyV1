@@ -71,10 +71,10 @@ class MatchedPair {
 
 /// Difficulty tier for Matched Pairs sub-exercises. Mirrors the iOS
 /// legacy "Auditory Hierarchy" grouping in ContentView.swift at
-/// L4305 (Beginner) and L4433 (Intermediate/Advanced).
+/// L4305 (Beginner → Level 1) and L4433 (Intermediate/Advanced → Level 2).
 enum MatchedPairsTier {
-  beginner('Beginner'),
-  intermediateAdvanced('Intermediate/Advanced');
+  beginner('Level 1'),
+  intermediateAdvanced('Level 2');
 
   const MatchedPairsTier(this.displayName);
   final String displayName;
@@ -177,5 +177,48 @@ enum WordRecognitionLevel {
   Color color(Brightness b) => switch (this) {
         WordRecognitionLevel.closedSet => AppTheme.success(b),
         WordRecognitionLevel.openSet => AppColors.gradientPurple,
+      };
+}
+
+/// Difficulty levels for Sentence Comprehension. Progresses from
+/// closed-set multiple choice (Level 1) through cloze / fill-in-the-blank
+/// (Level 2) to full open-set speak-back (Level 3).
+enum SentenceComprehensionLevel {
+  closedSet(
+    'Level 1',
+    'Closed Set',
+    'Listen to the sentence and pick the match from four choices',
+    Icons.checklist_rounded,
+  ),
+  fillInTheBlank(
+    'Level 2',
+    'Fill in the Blank',
+    'Listen, then type the missing word',
+    Icons.edit_note_rounded,
+  ),
+  openSet(
+    'Level 3',
+    'Open Set',
+    'Listen to the sentence and speak it back completely',
+    Icons.mic_rounded,
+  );
+
+  const SentenceComprehensionLevel(
+    this.levelLabel,
+    this.displayName,
+    this.description,
+    this.icon,
+  );
+
+  final String levelLabel;
+  final String displayName;
+  final String description;
+  final IconData icon;
+
+  Color color(Brightness b) => switch (this) {
+        SentenceComprehensionLevel.closedSet => AppTheme.success(b),
+        SentenceComprehensionLevel.fillInTheBlank =>
+          AppTheme.accentOrange(b),
+        SentenceComprehensionLevel.openSet => AppColors.gradientPurple,
       };
 }

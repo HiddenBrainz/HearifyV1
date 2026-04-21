@@ -26,12 +26,16 @@ class AudioService extends ChangeNotifier {
   double _currentVolume = 1.0;
   double _currentSpeed = 1.0;
   double _backgroundNoiseVolume = 0.3;
+  String? _currentVoiceName;
+  String? _currentVoiceLocale;
 
   bool get isSpeaking => _isSpeaking;
   bool get isPlayingBackgroundNoise => _isPlayingBackgroundNoise;
   double get currentVolume => _currentVolume;
   double get currentSpeed => _currentSpeed;
   double get backgroundNoiseVolume => _backgroundNoiseVolume;
+  String? get currentVoiceName => _currentVoiceName;
+  String? get currentVoiceLocale => _currentVoiceLocale;
 
   Future<void> _ensureInit() async {
     if (_initialized) return;
@@ -137,6 +141,9 @@ class AudioService extends ChangeNotifier {
     await _ensureInit();
     try {
       await _tts.setVoice({'name': name, 'locale': locale});
+      _currentVoiceName = name;
+      _currentVoiceLocale = locale;
+      notifyListeners();
     } catch (e) {
       debugPrint('setVoice failed: $e');
     }
