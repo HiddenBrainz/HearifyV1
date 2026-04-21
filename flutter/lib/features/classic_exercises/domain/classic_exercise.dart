@@ -144,3 +144,38 @@ enum MatchedPairsSubcategory {
         MatchedPairsSubcategory.finalConsonants => AppColors.gradientPurple,
       };
 }
+
+/// Difficulty levels for Word Recognition. Mirrors the iOS legacy flow
+/// where the closed-set is multiple-choice (four options per word) and
+/// the open-set plays a word and asks the user to speak it back.
+enum WordRecognitionLevel {
+  closedSet(
+    'Level 1',
+    'Closed Set',
+    'Listen and pick the word from four choices',
+    Icons.checklist_rounded,
+  ),
+  openSet(
+    'Level 2',
+    'Open Set',
+    'Listen and speak the word back',
+    Icons.mic_rounded,
+  );
+
+  const WordRecognitionLevel(
+    this.levelLabel,
+    this.displayName,
+    this.description,
+    this.icon,
+  );
+
+  final String levelLabel;
+  final String displayName;
+  final String description;
+  final IconData icon;
+
+  Color color(Brightness b) => switch (this) {
+        WordRecognitionLevel.closedSet => AppTheme.success(b),
+        WordRecognitionLevel.openSet => AppColors.gradientPurple,
+      };
+}

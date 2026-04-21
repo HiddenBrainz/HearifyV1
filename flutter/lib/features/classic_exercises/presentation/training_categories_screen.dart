@@ -13,6 +13,7 @@ import 'matched_pairs_subcategory_screen.dart';
 import 'multiple_choice_exercise_screen.dart';
 import 'widgets/category_card.dart';
 import 'widgets/featured_insights_card.dart';
+import 'word_recognition_level_screen.dart';
 
 /// Post-login landing: a 2×3 grid of the six Classic Exercise categories,
 /// a featured Practice Insights card, and a bottom Practice List CTA.
@@ -99,10 +100,7 @@ class TrainingCategoriesScreen extends ConsumerWidget {
         Navigator.push(
           ctx,
           MaterialPageRoute(
-            builder: (_) => MultipleChoiceExerciseScreen(
-              category: c,
-              loader: repo.loadWordRecognition,
-            ),
+            builder: (_) => const WordRecognitionLevelScreen(),
           ),
         );
       case ClassicExerciseCategory.sentenceComprehension:
