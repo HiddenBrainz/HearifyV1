@@ -48,13 +48,28 @@ class ExerciseRepository {
   /// discrimination drill.
   Future<List<MatchedPair>> loadMatchedPairs() async {
     final rows = await CsvLoader.load('MatchedPairsData');
+    return _parseMatchedPairRows(rows);
+  }
+
+  /// Loads the CSV bundled for [sub]. Mirrors the iOS
+  /// `auditoryHierarchyScreenContent` dispatch in ContentView.swift.
+  Future<List<MatchedPair>> loadMatchedPairsFor(
+    MatchedPairsSubcategory sub,
+  ) async {
+    final rows = await CsvLoader.load(sub.csvName);
+    return _parseMatchedPairRows(rows);
+  }
+
+  List<MatchedPair> _parseMatchedPairRows(List<List<String>> rows) {
     final out = <MatchedPair>[];
     for (var i = 0; i < rows.length; i++) {
       final r = rows[i];
       if (i == 0 &&
           r.length >= 2 &&
           r[0].toLowerCase().contains('first') &&
-          r[1].toLowerCase().contains('last')) continue;
+          r[1].toLowerCase().contains('last')) {
+        continue;
+      }
       if (r.length < 2) continue;
       out.add(MatchedPair(
         first: r[0],

@@ -9,7 +9,7 @@ import '../../auth/presentation/widgets/gradient_primary_button.dart';
 import '../data/exercise_repository.dart';
 import '../domain/classic_exercise.dart';
 import 'custom_practice_screen.dart';
-import 'matched_pairs_screen.dart';
+import 'matched_pairs_subcategory_screen.dart';
 import 'multiple_choice_exercise_screen.dart';
 import 'widgets/category_card.dart';
 import 'widgets/featured_insights_card.dart';
@@ -139,7 +139,9 @@ class TrainingCategoriesScreen extends ConsumerWidget {
       case ClassicExerciseCategory.matchedPairs:
         Navigator.push(
           ctx,
-          MaterialPageRoute(builder: (_) => const MatchedPairsScreen()),
+          MaterialPageRoute(
+            builder: (_) => const MatchedPairsSubcategoryScreen(),
+          ),
         );
       case ClassicExerciseCategory.customPractice:
         Navigator.push(

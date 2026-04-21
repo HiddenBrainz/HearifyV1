@@ -18,7 +18,9 @@ import '../domain/session_config.dart';
 /// taps which one they heard. A session runs for
 /// `SessionConfig.itemsPerSession` attempts then offers to continue or end.
 class MatchedPairsScreen extends ConsumerStatefulWidget {
-  const MatchedPairsScreen({super.key});
+  const MatchedPairsScreen({super.key, required this.subcategory});
+
+  final MatchedPairsSubcategory subcategory;
 
   @override
   ConsumerState<MatchedPairsScreen> createState() => _MatchedPairsScreenState();
@@ -35,7 +37,6 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   bool _targetIsFirst = true;
   String? _selected;
   bool _revealed = false;
-  String? _categoryFilter;
   Timer? _autoAdvance;
 
   @override
@@ -54,8 +55,9 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   }
 
   Future<void> _load() async {
-    final pool =
-        await ref.read(exerciseRepositoryProvider).loadMatchedPairs();
+    final pool = await ref
+        .read(exerciseRepositoryProvider)
+        .loadMatchedPairsFor(widget.subcategory);
     if (!mounted) return;
     setState(() {
       _pool = pool;
@@ -65,15 +67,8 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
     _playCurrent();
   }
 
-  List<MatchedPair> _filteredPool() {
-    final base = _pool;
-    return _categoryFilter == null
-        ? base
-        : base.where((p) => p.category == _categoryFilter).toList();
-  }
-
   List<MatchedPair> _drawSession() {
-    final pool = _filteredPool();
+    final pool = _pool;
     if (pool.isEmpty) return const [];
     final shuffled = [...pool]..shuffle(_rand);
     final n = math.min(SessionConfig.itemsPerSession, shuffled.length);
@@ -182,7 +177,7 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         ),
-        title: const Text('Matched Pairs — session complete'),
+        title: Text('${widget.subcategory.displayName} — session complete'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -230,33 +225,13 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   Widget build(BuildContext context) {
     final b = Theme.of(context).brightness;
     final audio = ref.watch(audioServiceProvider);
-    final color = ClassicExerciseCategory.matchedPairs.color(b);
-    final categories = <String>{..._pool.map((p) => p.category)}.toList()
-      ..sort();
+    final color = widget.subcategory.color(b);
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundPrimary(b),
       appBar: AppBar(
-        title: const Text('Matched Pairs'),
+        title: Text(widget.subcategory.displayName),
         actions: [
-          if (categories.isNotEmpty)
-            PopupMenuButton<String?>(
-              icon: const Icon(Icons.filter_list),
-              initialValue: _categoryFilter,
-              onSelected: (v) => setState(() {
-                _categoryFilter = v;
-                _session = _drawSession();
-                _index = 0;
-                _correct = 0;
-                _selected = null;
-                _revealed = false;
-              }),
-              itemBuilder: (_) => [
-                const PopupMenuItem(value: null, child: Text('All')),
-                ...categories.map(
-                    (c) => PopupMenuItem(value: c, child: Text(c))),
-              ],
-            ),
           if (!_loading && _session.isNotEmpty)
             IconButton(
               tooltip: 'End session',
@@ -315,12 +290,6 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
               children: [
                 Icon(audio.isSpeaking ? Icons.graphic_eq : Icons.headphones,
                     size: 40, color: color),
-                const SizedBox(height: 8),
-                Text('Category: ${p.category}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textTertiary(b),
-                    )),
                 const SizedBox(height: 12),
                 FilledButton.tonalIcon(
                   onPressed: audio.isSpeaking

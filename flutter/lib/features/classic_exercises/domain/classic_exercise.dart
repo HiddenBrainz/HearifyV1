@@ -68,3 +68,79 @@ class MatchedPair {
   final String second;
   final String category;
 }
+
+/// Difficulty tier for Matched Pairs sub-exercises. Mirrors the iOS
+/// legacy "Auditory Hierarchy" grouping in ContentView.swift at
+/// L4305 (Beginner) and L4433 (Intermediate/Advanced).
+enum MatchedPairsTier {
+  beginner('Beginner'),
+  intermediateAdvanced('Intermediate/Advanced');
+
+  const MatchedPairsTier(this.displayName);
+  final String displayName;
+}
+
+/// Every Matched Pairs sub-exercise offered on the Auditory Hierarchy
+/// chooser. Each entry points at a bundled CSV (stem only — the loader
+/// in `CsvLoader.load` fills in the `.csv` suffix and the
+/// `assets/csv/` prefix) and carries its own brand accent + icon so
+/// the chooser tiles feel consistent with the home grid.
+enum MatchedPairsSubcategory {
+  syllables(
+    'Different by Syllables',
+    'Compare words with different syllable counts',
+    MatchedPairsTier.beginner,
+    'SyllablesData',
+    Icons.format_size_rounded,
+  ),
+  phonetics(
+    'Different Phonetics',
+    'Common phonetically distinct pairs',
+    MatchedPairsTier.beginner,
+    'PDData',
+    Icons.record_voice_over_rounded,
+  ),
+  vowels(
+    'Different Vowels',
+    'Contrasting vowel sounds',
+    MatchedPairsTier.beginner,
+    'Vowels',
+    Icons.text_format_rounded,
+  ),
+  initialConsonants(
+    'Different Initial Consonants',
+    'Words that differ at the start',
+    MatchedPairsTier.intermediateAdvanced,
+    'Consonants',
+    Icons.first_page_rounded,
+  ),
+  finalConsonants(
+    'Final Consonants',
+    'Words that differ at the end',
+    MatchedPairsTier.intermediateAdvanced,
+    'FinalConsonants',
+    Icons.last_page_rounded,
+  );
+
+  const MatchedPairsSubcategory(
+    this.displayName,
+    this.description,
+    this.tier,
+    this.csvName,
+    this.icon,
+  );
+
+  final String displayName;
+  final String description;
+  final MatchedPairsTier tier;
+  final String csvName;
+  final IconData icon;
+
+  Color color(Brightness b) => switch (this) {
+        MatchedPairsSubcategory.syllables => AppTheme.primaryBlue(b),
+        MatchedPairsSubcategory.phonetics => AppTheme.primaryCyan(b),
+        MatchedPairsSubcategory.vowels => AppTheme.success(b),
+        MatchedPairsSubcategory.initialConsonants => AppTheme.accentOrange(b),
+        MatchedPairsSubcategory.finalConsonants => AppColors.gradientPurple,
+      };
+}
