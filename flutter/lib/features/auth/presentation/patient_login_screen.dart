@@ -73,7 +73,7 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
                 children: [
                   const SizedBox(height: AppSpacing.huge),
                   BrandingHeader(
-                    title: 'HearifyV1',
+                    title: 'Hearify',
                     subtitle: _role == UserRole.clinician
                         ? 'Audiologist Dashboard'
                         : 'Auditory Rehabilitation',
