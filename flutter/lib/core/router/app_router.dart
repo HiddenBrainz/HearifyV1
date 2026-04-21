@@ -39,6 +39,16 @@ GoRouter buildRouter(Ref ref) {
       final loc = state.matchedLocation;
 
       if (!auth.isSignedIn && loc != '/login') return '/login';
+
+      // Clinicians skip the patient-only onboarding gauntlet and land on
+      // their dashboard. They can still navigate to /about etc. freely.
+      if (auth.isSignedIn && auth.role == UserRole.clinician) {
+        if (loc == '/login' || loc.startsWith('/onboarding')) {
+          return '/clinician/dashboard';
+        }
+        return null;
+      }
+
       if (auth.isSignedIn && !legal && loc != '/onboarding/legal') {
         return '/onboarding/legal';
       }

@@ -28,11 +28,14 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
   final _password = TextEditingController();
   final _name = TextEditingController();
 
-  int _segment = 0;
+  int _roleSegment = 0; // 0 = patient, 1 = clinician
+  int _segment = 0; // 0 = sign in, 1 = sign up
   bool _busy = false;
   String? _error;
 
   bool get _isSignUp => _segment == 1;
+  UserRole get _role =>
+      _roleSegment == 0 ? UserRole.patient : UserRole.clinician;
 
   @override
   void dispose() {
@@ -69,19 +72,30 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppSpacing.huge),
-                  const BrandingHeader(
+                  BrandingHeader(
                     title: 'HearifyV1',
-                    subtitle: 'Auditory Rehabilitation',
+                    subtitle: _role == UserRole.clinician
+                        ? 'Audiologist Dashboard'
+                        : 'Auditory Rehabilitation',
+                    mark: _role == UserRole.clinician
+                        ? Icons.medical_services_rounded
+                        : Icons.hearing_rounded,
                   ),
                   const SizedBox(height: AppSpacing.huge),
                   _AuthForm(
+                    roleSegment: _roleSegment,
                     segment: _segment,
                     isSignUp: _isSignUp,
+                    isClinician: _role == UserRole.clinician,
                     email: _email,
                     password: _password,
                     name: _name,
                     busy: _busy,
                     error: _error,
+                    onRoleChanged: (i) => setState(() {
+                      _roleSegment = i;
+                      _error = null;
+                    }),
                     onSegmentChanged: (i) => setState(() {
                       _segment = i;
                       _error = null;
@@ -94,7 +108,7 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
                     onGuest: (kDebugMode && !FirebaseBootstrap.initialized)
                         ? () => ref
                             .read(authControllerProvider.notifier)
-                            .debugSignInAsGuest()
+                            .debugSignInAsGuest(role: _role)
                         : null,
                   ),
                 ],
@@ -119,15 +133,19 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
           email: _email.text.trim(),
           password: _password.text,
           name: _name.text.trim(),
+          role: _role,
         );
       } else {
         await auth.signIn(
           email: _email.text.trim(),
           password: _password.text,
+          expectedRole: _role,
         );
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? e.code);
+    } on StateError catch (e) {
+      setState(() => _error = e.message);
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -138,26 +156,32 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
 
 class _AuthForm extends StatelessWidget {
   const _AuthForm({
+    required this.roleSegment,
     required this.segment,
     required this.isSignUp,
+    required this.isClinician,
     required this.email,
     required this.password,
     required this.name,
     required this.busy,
     required this.error,
+    required this.onRoleChanged,
     required this.onSegmentChanged,
     required this.onSubmit,
     required this.onHelperLinkTap,
     required this.onGuest,
   });
 
+  final int roleSegment;
   final int segment;
   final bool isSignUp;
+  final bool isClinician;
   final TextEditingController email;
   final TextEditingController password;
   final TextEditingController name;
   final bool busy;
   final String? error;
+  final ValueChanged<int> onRoleChanged;
   final ValueChanged<int> onSegmentChanged;
   final VoidCallback onSubmit;
   final VoidCallback onHelperLinkTap;
@@ -170,6 +194,12 @@ class _AuthForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AuthSegmentedToggle(
+            labels: const ['Patient', 'Audiologist'],
+            selectedIndex: roleSegment,
+            onChanged: onRoleChanged,
+          ),
+          const SizedBox(height: AppSpacing.l),
+          AuthSegmentedToggle(
             labels: const ['Sign In', 'Sign Up'],
             selectedIndex: segment,
             onChanged: onSegmentChanged,
@@ -179,7 +209,7 @@ class _AuthForm extends StatelessWidget {
             HearifyTextField(
               label: 'Full Name',
               controller: name,
-              placeholder: 'Jane Doe',
+              placeholder: isClinician ? 'Dr. Jane Smith' : 'Jane Doe',
               textInputAction: TextInputAction.next,
               keyboardType: TextInputType.name,
             ),
