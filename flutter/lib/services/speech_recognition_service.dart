@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -159,6 +160,51 @@ final sttServiceProvider =
   ref.onDispose(s.dispose);
   return s;
 });
+
+/// Counts how many *content* words from [target] appear in [heard]
+/// (case-insensitive, ignoring punctuation, stopwords excluded).
+/// Used by the BKB-SIN / AzBio open-set key-word scoring paradigms,
+/// where audiologists count meaning-bearing words rather than function
+/// words. Optional [cap] enforces the audiology score sheet's
+/// per-sentence key-word ceiling.
+int keyWordsMatched({
+  required String target,
+  required String heard,
+  int? cap,
+}) {
+  const stop = <String>{
+    'a', 'an', 'the', 'and', 'or', 'but', 'of', 'to', 'in', 'on', 'at',
+    'for', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'am', 'it', 'its', 'my', 'your', 'his', 'her', 'their', 'our',
+    'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'they',
+    'we', 'him', 'them', 'us', 'some', 'from', 'as', 'do', 'does', 'did',
+    'will', 'would', 'can', 'could', 'should', 'has', 'have', 'had',
+  };
+  List<String> tokens(String s) => s
+      .toLowerCase()
+      .replaceAll(RegExp(r"[^a-z\s']"), ' ')
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty && !stop.contains(w))
+      .toList();
+  final targetWords = tokens(target);
+  final heardSet = tokens(heard).toSet();
+  var matched = 0;
+  for (final w in targetWords) {
+    if (heardSet.contains(w)) matched++;
+  }
+  if (cap != null) return matched.clamp(0, cap);
+  return matched;
+}
+
+/// Maps a positive SNR (dB) to the background-noise volume that would
+/// realize it on top of a TTS speech output of unity gain (1.0).
+/// `noise = 10^(-snrDb/20)`, clamped to [0, 1]. SNR ≤ 0 saturates the
+/// noise channel at 1.0 — software-only mixing can't make noise louder
+/// than speech without external attenuation.
+double noiseVolumeForSnrDb(num snrDb) {
+  final amp = math.pow(10, -snrDb / 20).toDouble();
+  return amp.clamp(0.0, 1.0);
+}
 
 /// Simple similarity score (0..1) between what the user said and the
 /// expected target. Used in word/sentence-level scoring where no phoneme

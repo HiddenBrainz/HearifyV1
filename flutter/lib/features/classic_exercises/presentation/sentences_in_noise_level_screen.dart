@@ -5,16 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/auth_design_system.dart';
 import '../data/exercise_repository.dart';
 import '../domain/classic_exercise.dart';
+import 'adaptive_snr_sentences_screen.dart';
 import 'multiple_choice_exercise_screen.dart';
-import 'open_set_word_exercise_screen.dart';
-import 'words_in_noise_screen.dart';
 
-/// Word Recognition level chooser — two-tier layout mirroring the
-/// Matched Pairs sub-category screen. Level 1 drops into the existing
-/// closed-set multiple-choice drill; Level 2 routes to the open-set
-/// speak-back drill.
-class WordRecognitionLevelScreen extends ConsumerWidget {
-  const WordRecognitionLevelScreen({super.key});
+/// Sentences in Noise level chooser. Level 1 keeps the existing
+/// fixed-noise multiple-choice drill. Level 2 is the BKB-SIN-style
+/// adaptive open-set drill that outputs an SNR-50 metric.
+class SentencesInNoiseLevelScreen extends ConsumerWidget {
+  const SentencesInNoiseLevelScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +30,7 @@ class WordRecognitionLevelScreen extends ConsumerWidget {
           elevation: 0,
           iconTheme: const IconThemeData(color: AppColors.textPrimary),
           title: Text(
-            'Word Recognition',
+            'Sentences in Noise',
             style: AppTextStyles.title.copyWith(fontSize: 20),
           ),
         ),
@@ -52,35 +50,21 @@ class WordRecognitionLevelScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _LevelHeader(
-                    title: 'Level 1',
-                    subtitle: 'Start with four options.',
-                  ),
-                  const SizedBox(height: AppSpacing.l),
-                  _LevelTile(
-                    level: WordRecognitionLevel.closedSet,
-                    onTap: () => _launchClosed(context, ref),
+                  _LevelSection(
+                    title: SentencesInNoiseLevel.fixedNoise.levelLabel,
+                    subtitle: 'Pick the sentence at a fixed noise level.',
+                    level: SentencesInNoiseLevel.fixedNoise,
+                    onTap: () => _launchFixed(context, ref),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  const _LevelHeader(
-                    title: 'Level 2',
-                    subtitle: 'Step it up — speak the word back.',
-                  ),
-                  const SizedBox(height: AppSpacing.l),
-                  _LevelTile(
-                    level: WordRecognitionLevel.openSet,
-                    onTap: () => _launchOpen(context),
-                  ),
-                  const SizedBox(height: AppSpacing.xxl),
-                  const _LevelHeader(
-                    title: 'Level 3',
+                  _LevelSection(
+                    title:
+                        SentencesInNoiseLevel.adaptiveSnr50.levelLabel,
                     subtitle:
-                        'Speak words back as the noise grows. Reports SNR-50.',
-                  ),
-                  const SizedBox(height: AppSpacing.l),
-                  _LevelTile(
-                    level: WordRecognitionLevel.wordsInNoise,
-                    onTap: () => _launchWordsInNoise(context),
+                        'Speak each sentence back as the SNR steps down. '
+                        'Reports SNR-50 like BKB-SIN.',
+                    level: SentencesInNoiseLevel.adaptiveSnr50,
+                    onTap: () => _launchAdaptive(context),
                   ),
                 ],
               ),
@@ -91,48 +75,47 @@ class WordRecognitionLevelScreen extends ConsumerWidget {
     );
   }
 
-  void _launchClosed(BuildContext context, WidgetRef ref) {
+  void _launchFixed(BuildContext context, WidgetRef ref) {
     final repo = ref.read(exerciseRepositoryProvider);
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => MultipleChoiceExerciseScreen(
-          category: ClassicExerciseCategory.wordRecognition,
-          loader: repo.loadWordRecognition,
+          category: ClassicExerciseCategory.sentencesInNoise,
+          loader: repo.loadSentencesInNoise,
+          backgroundNoiseVolume: 0.4,
         ),
       ),
     );
   }
 
-  void _launchOpen(BuildContext context) {
+  void _launchAdaptive(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const OpenSetWordExerciseScreen(),
-      ),
-    );
-  }
-
-  void _launchWordsInNoise(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const WordsInNoiseScreen(),
+        builder: (_) => const AdaptiveSnrSentencesScreen(),
       ),
     );
   }
 }
 
-class _LevelHeader extends StatelessWidget {
-  const _LevelHeader({required this.title, required this.subtitle});
+class _LevelSection extends StatelessWidget {
+  const _LevelSection({
+    required this.title,
+    required this.subtitle,
+    required this.level,
+    required this.onTap,
+  });
 
   final String title;
   final String subtitle;
+  final SentencesInNoiseLevel level;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(title, style: AppTextStyles.title.copyWith(fontSize: 22)),
         const SizedBox(height: AppSpacing.xs),
@@ -143,6 +126,8 @@ class _LevelHeader extends StatelessWidget {
             color: AppColors.textSecondary,
           ),
         ),
+        const SizedBox(height: AppSpacing.l),
+        _LevelTile(level: level, onTap: onTap),
       ],
     );
   }
@@ -151,7 +136,7 @@ class _LevelHeader extends StatelessWidget {
 class _LevelTile extends StatelessWidget {
   const _LevelTile({required this.level, required this.onTap});
 
-  final WordRecognitionLevel level;
+  final SentencesInNoiseLevel level;
   final VoidCallback onTap;
 
   @override
@@ -206,7 +191,8 @@ class _LevelTile extends StatelessWidget {
                     children: [
                       Text(
                         level.displayName,
-                        style: AppTextStyles.ctaLabel.copyWith(fontSize: 16),
+                        style:
+                            AppTextStyles.ctaLabel.copyWith(fontSize: 16),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(

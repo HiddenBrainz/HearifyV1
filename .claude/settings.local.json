@@ -32,7 +32,9 @@
       "Bash(pkill -f \"flutter_tools.*chrome\")",
       "Bash(awk '{print $NF}')",
       "Bash(git rm *)",
-      "Bash(osascript *)"
+      "Bash(osascript *)",
+      "Bash(awk 'NR>=4300 && NR<=4520' /Users/vedantnahar/Downloads/HearifyV1/ios-legacy/HearifyV1/ContentView.swift)",
+      "Bash(awk NR>=2716 && NR<=2740 *)"
     ]
   }
 }

@@ -12,6 +12,7 @@ import 'custom_practice_screen.dart';
 import 'matched_pairs_subcategory_screen.dart';
 import 'multiple_choice_exercise_screen.dart';
 import 'sentence_comprehension_level_screen.dart';
+import 'sentences_in_noise_level_screen.dart';
 import 'widgets/category_card.dart';
 import 'widgets/featured_insights_card.dart';
 import 'word_recognition_level_screen.dart';
@@ -115,11 +116,7 @@ class TrainingCategoriesScreen extends ConsumerWidget {
         Navigator.push(
           ctx,
           MaterialPageRoute(
-            builder: (_) => MultipleChoiceExerciseScreen(
-              category: c,
-              loader: repo.loadSentencesInNoise,
-              backgroundNoiseVolume: 0.4,
-            ),
+            builder: (_) => const SentencesInNoiseLevelScreen(),
           ),
         );
       case ClassicExerciseCategory.diagnosticTest:

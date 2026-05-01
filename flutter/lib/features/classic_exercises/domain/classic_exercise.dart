@@ -160,6 +160,12 @@ enum WordRecognitionLevel {
     'Open Set',
     'Listen and speak the word back',
     Icons.mic_rounded,
+  ),
+  wordsInNoise(
+    'Level 3',
+    'Words in Noise',
+    'Speak each word back as the noise gets louder (WIN, SNR-50)',
+    Icons.graphic_eq_rounded,
   );
 
   const WordRecognitionLevel(
@@ -177,7 +183,88 @@ enum WordRecognitionLevel {
   Color color(Brightness b) => switch (this) {
         WordRecognitionLevel.closedSet => AppTheme.success(b),
         WordRecognitionLevel.openSet => AppColors.gradientPurple,
+        WordRecognitionLevel.wordsInNoise => AppTheme.warning(b),
       };
+}
+
+/// Sentences in Noise levels. Level 1 is the existing fixed-noise
+/// closed-set drill; Level 2 is the BKB-SIN-style adaptive open-set
+/// drill that outputs an SNR-50 metric.
+enum SentencesInNoiseLevel {
+  fixedNoise(
+    'Level 1',
+    'Fixed Noise',
+    'Pick the sentence you heard with adjustable background noise',
+    Icons.checklist_rounded,
+  ),
+  adaptiveSnr50(
+    'Level 2',
+    'Adaptive SNR-50',
+    'Speak each sentence back as the noise gets louder',
+    Icons.trending_down_rounded,
+  );
+
+  const SentencesInNoiseLevel(
+    this.levelLabel,
+    this.displayName,
+    this.description,
+    this.icon,
+  );
+
+  final String levelLabel;
+  final String displayName;
+  final String description;
+  final IconData icon;
+
+  Color color(Brightness b) => switch (this) {
+        SentencesInNoiseLevel.fixedNoise => AppTheme.success(b),
+        SentencesInNoiseLevel.adaptiveSnr50 => AppColors.gradientPurple,
+      };
+}
+
+/// One BKB-SIN-style sentence presented at a fixed SNR. The drill
+/// schedules these in descending SNR order (+21 → 0 dB) and computes
+/// SNR-50 from the total key words correct.
+class AdaptiveSentenceItem {
+  const AdaptiveSentenceItem({
+    required this.sentence,
+    required this.keyWords,
+    required this.snrDb,
+    required this.listId,
+  });
+
+  final String sentence;
+  final int keyWords;
+  final int snrDb;
+  final String listId;
+}
+
+/// One Words-in-Noise (WIN) word presented at a fixed SNR. The drill
+/// schedules them in 4-dB descending steps (+24 → 0 dB) with five
+/// words per step.
+class WordInNoiseItem {
+  const WordInNoiseItem({
+    required this.word,
+    required this.snrDb,
+    required this.listId,
+  });
+
+  final String word;
+  final int snrDb;
+  final String listId;
+}
+
+/// Open-set sentence with key-word annotation (AzBio paradigm).
+class OpenSetSentenceItem {
+  const OpenSetSentenceItem({
+    required this.sentence,
+    required this.keyWords,
+    required this.listId,
+  });
+
+  final String sentence;
+  final int keyWords;
+  final String listId;
 }
 
 /// Difficulty levels for Sentence Comprehension. Progresses from

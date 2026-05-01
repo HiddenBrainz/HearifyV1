@@ -60,6 +60,84 @@ class ExerciseRepository {
     return _parseMatchedPairRows(rows);
   }
 
+  /// BKB-SIN sentences with key-word counts and per-item SNR.
+  /// Schema: `sentence,keyWords,snrDb,listId` (header row).
+  Future<Map<String, List<AdaptiveSentenceItem>>> loadBkbSinByList() async {
+    final rows = await CsvLoader.load('BKBSINData');
+    final groups = <String, List<AdaptiveSentenceItem>>{};
+    for (var i = 0; i < rows.length; i++) {
+      final r = rows[i];
+      if (i == 0 &&
+          r.isNotEmpty &&
+          r.first.toLowerCase() == 'sentence') {
+        continue;
+      }
+      if (r.length < 4) continue;
+      final item = AdaptiveSentenceItem(
+        sentence: r[0],
+        keyWords: int.tryParse(r[1]) ?? 0,
+        snrDb: int.tryParse(r[2]) ?? 0,
+        listId: r[3],
+      );
+      groups.putIfAbsent(item.listId, () => []).add(item);
+    }
+    // Sort each list by descending SNR so the session plays from
+    // easiest to hardest.
+    for (final list in groups.values) {
+      list.sort((a, b) => b.snrDb.compareTo(a.snrDb));
+    }
+    return groups;
+  }
+
+  /// Words-in-Noise items grouped by list.
+  /// Schema: `word,snrDb,listId` (header row).
+  Future<Map<String, List<WordInNoiseItem>>> loadWinByList() async {
+    final rows = await CsvLoader.load('WINData');
+    final groups = <String, List<WordInNoiseItem>>{};
+    for (var i = 0; i < rows.length; i++) {
+      final r = rows[i];
+      if (i == 0 &&
+          r.isNotEmpty &&
+          r.first.toLowerCase() == 'word') {
+        continue;
+      }
+      if (r.length < 3) continue;
+      final item = WordInNoiseItem(
+        word: r[0],
+        snrDb: int.tryParse(r[1]) ?? 0,
+        listId: r[2],
+      );
+      groups.putIfAbsent(item.listId, () => []).add(item);
+    }
+    for (final list in groups.values) {
+      list.sort((a, b) => b.snrDb.compareTo(a.snrDb));
+    }
+    return groups;
+  }
+
+  /// AzBio sentences grouped by list. Schema:
+  /// `sentence,keyWords,listId` (header row).
+  Future<Map<String, List<OpenSetSentenceItem>>> loadAzBioByList() async {
+    final rows = await CsvLoader.load('AzBioData');
+    final groups = <String, List<OpenSetSentenceItem>>{};
+    for (var i = 0; i < rows.length; i++) {
+      final r = rows[i];
+      if (i == 0 &&
+          r.isNotEmpty &&
+          r.first.toLowerCase() == 'sentence') {
+        continue;
+      }
+      if (r.length < 3) continue;
+      final item = OpenSetSentenceItem(
+        sentence: r[0],
+        keyWords: int.tryParse(r[1]) ?? 0,
+        listId: r[2],
+      );
+      groups.putIfAbsent(item.listId, () => []).add(item);
+    }
+    return groups;
+  }
+
   List<MatchedPair> _parseMatchedPairRows(List<List<String>> rows) {
     final out = <MatchedPair>[];
     for (var i = 0; i < rows.length; i++) {
