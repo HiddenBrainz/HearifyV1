@@ -10,7 +10,12 @@ class SherpaTtsEngine {
   bool get isSpeaking => false;
 
   Future<bool> initialize() async => false;
-  Future<bool> speak(String text, {double speed = 1.0}) async => false;
+  Future<bool> speak(
+    String text, {
+    double speed = 1.0,
+    String voice = 'af_bella',
+  }) async =>
+      false;
   Future<void> stop() async {}
   Future<void> dispose() async {}
 }

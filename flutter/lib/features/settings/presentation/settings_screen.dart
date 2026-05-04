@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/auth_design_system.dart';
 import '../../../services/audio_service.dart';
+import '../../../services/tts/prerendered_lookup.dart';
 import '../../auth/data/auth_controller.dart';
 
 /// Consolidates secondary entry points that used to live on the home
@@ -373,40 +374,20 @@ class _SliderRow extends StatelessWidget {
   }
 }
 
-class _VoicePickerRow extends ConsumerStatefulWidget {
+/// Picker that switches the bundled Kokoro voice used for every
+/// pre-rendered stimulus and for runtime Sherpa Kokoro synthesis on
+/// Custom Practice. The list comes from `assets/audio/tts/manifest.json`
+/// produced by `tools/prerender_tts.py`.
+class _VoicePickerRow extends ConsumerWidget {
   const _VoicePickerRow({required this.accent});
   final Color accent;
 
-  @override
-  ConsumerState<_VoicePickerRow> createState() => _VoicePickerRowState();
-}
-
-class _VoicePickerRowState extends ConsumerState<_VoicePickerRow> {
-  List<Map<String, String>> _voices = const [];
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadVoices();
-  }
-
-  Future<void> _loadVoices() async {
-    final raw = await ref.read(audioServiceProvider).availableVoices();
-    final english = raw
-        .where((m) => (m['locale'] ?? '').toLowerCase().startsWith('en'))
-        .toList();
-    if (!mounted) return;
-    setState(() {
-      _voices = english.isEmpty ? raw : english;
-      _loading = false;
-    });
-  }
-
-  Future<void> _openPicker() async {
-    if (_voices.isEmpty) return;
-    final audio = ref.read(audioServiceProvider);
-    final selected = await showModalBottomSheet<Map<String, String>>(
+  Future<void> _openPicker(
+    BuildContext context,
+    AudioService audio,
+    List<KokoroVoiceInfo> voices,
+  ) async {
+    final selected = await showModalBottomSheet<KokoroVoiceInfo>(
       context: context,
       backgroundColor: AppColors.authCardBase,
       showDragHandle: true,
@@ -424,28 +405,36 @@ class _VoicePickerRowState extends ConsumerState<_VoicePickerRow> {
                 AppSpacing.l,
                 AppSpacing.l,
               ),
-              itemCount: _voices.length,
+              itemCount: voices.length,
               separatorBuilder: (_, _) => const Divider(
                 height: 1,
                 thickness: 0.5,
                 color: AppColors.hairline,
               ),
               itemBuilder: (_, i) {
-                final v = _voices[i];
-                final isSelected = v['name'] == audio.currentVoiceName;
+                final v = voices[i];
+                final isSelected = v.id == audio.kokoroVoiceId;
                 return ListTile(
+                  leading: Icon(
+                    v.gender == 'male'
+                        ? Icons.man_rounded
+                        : Icons.woman_rounded,
+                    color: accent,
+                  ),
                   title: Text(
-                    v['name'] ?? '',
+                    v.displayName,
                     style: AppTextStyles.ctaLabel.copyWith(fontSize: 15),
                   ),
                   subtitle: Text(
-                    v['locale'] ?? '',
+                    v.gender.isEmpty
+                        ? v.id
+                        : '${v.gender[0].toUpperCase()}${v.gender.substring(1)}  ·  ${v.id}',
                     style: AppTextStyles.inputLabel.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
                   trailing: isSelected
-                      ? Icon(Icons.check_rounded, color: widget.accent)
+                      ? Icon(Icons.check_rounded, color: accent)
                       : null,
                   onTap: () => Navigator.pop(context, v),
                 );
@@ -456,36 +445,40 @@ class _VoicePickerRowState extends ConsumerState<_VoicePickerRow> {
       },
     );
     if (selected != null) {
-      await audio.setVoice(
-        selected['name'] ?? '',
-        selected['locale'] ?? 'en-US',
-      );
+      await audio.setKokoroVoice(selected.id);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final audio = ref.watch(audioServiceProvider);
-    final current = audio.currentVoiceName;
-    final currentLocale = audio.currentVoiceLocale;
-    final display = _loading
-        ? 'Loading…'
-        : (current == null || current.isEmpty)
-            ? _voices.isEmpty
-                ? 'No voices available'
-                : 'System default'
-            : currentLocale == null
-                ? current
-                : '$current  ·  $currentLocale';
+    final voices = audio.kokoroVoices;
+    final ready = audio.isPrerenderedReady;
+    final selectedId = audio.kokoroVoiceId;
+    final selected = voices.where((v) => v.id == selectedId).firstOrNull;
+
+    final String display;
+    if (!ready) {
+      display = 'Loading…';
+    } else if (voices.isEmpty) {
+      display = 'No voices bundled';
+    } else if (selected == null) {
+      display = 'Default';
+    } else {
+      display = selected.gender.isEmpty
+          ? selected.displayName
+          : '${selected.displayName}  ·  ${selected.gender[0].toUpperCase()}${selected.gender.substring(1)}';
+    }
+
+    final canTap = ready && voices.isNotEmpty;
     return InkWell(
-      onTap: _voices.isEmpty ? null : _openPicker,
+      onTap: canTap ? () => _openPicker(context, audio, voices) : null,
       borderRadius: BorderRadius.circular(AppRadii.input),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         child: Row(
           children: [
-            Icon(Icons.record_voice_over_rounded,
-                size: 18, color: widget.accent),
+            Icon(Icons.record_voice_over_rounded, size: 18, color: accent),
             const SizedBox(width: AppSpacing.s),
             Expanded(
               child: Column(
@@ -507,10 +500,10 @@ class _VoicePickerRowState extends ConsumerState<_VoicePickerRow> {
                 ],
               ),
             ),
-            Icon(Icons.expand_more_rounded,
-                color: _voices.isEmpty
-                    ? AppColors.textPlaceholder
-                    : widget.accent),
+            Icon(
+              Icons.expand_more_rounded,
+              color: canTap ? accent : AppColors.textPlaceholder,
+            ),
           ],
         ),
       ),

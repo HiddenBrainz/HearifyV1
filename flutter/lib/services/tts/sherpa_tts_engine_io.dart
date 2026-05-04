@@ -8,71 +8,77 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 
-/// Resolved on-disk paths for a Piper voice — exactly what
-/// `OfflineTtsVitsModelConfig` needs.
-class _PiperVoiceAssets {
-  const _PiperVoiceAssets({
-    required this.voiceId,
+/// Resolved on-disk paths for the Kokoro v0_19 bundle — exactly what
+/// `OfflineTtsKokoroModelConfig` needs.
+class _KokoroAssets {
+  const _KokoroAssets({
     required this.modelPath,
+    required this.voicesPath,
     required this.tokensPath,
     required this.dataDir,
+    required this.lexiconPath,
   });
 
-  final String voiceId;
   final String modelPath;
+  final String voicesPath;
   final String tokensPath;
   final String dataDir;
+  final String lexiconPath;
 }
 
-/// Downloads + caches Piper voices into the app docs dir.
+/// Downloads + caches the Sherpa Kokoro INT8 bundle (~88 MB) into the
+/// app docs dir. INT8 is plenty for runtime free-text synthesis and
+/// avoids a 270 MB FP32 download on first launch.
 ///
-/// Voice tarballs live at the Sherpa-ONNX release bucket as
-/// `vits-piper-<voiceId>.tar.bz2`. Cached directory layout:
-/// `<appDocs>/sherpa_voices/<voiceId>/{<id>.onnx,tokens.txt,espeak-ng-data/}`.
-class _SherpaVoiceManager {
-  _SherpaVoiceManager._();
-  static final _SherpaVoiceManager instance = _SherpaVoiceManager._();
+/// Cached layout:
+///   `<appDocs>/sherpa_voices/kokoro-int8-en-v0_19/`
+///     `model.int8.onnx`
+///     `voices.bin`
+///     `tokens.txt`
+///     `lexicon-us-en.txt`
+///     `espeak-ng-data/`
+class _SherpaKokoroManager {
+  _SherpaKokoroManager._();
+  static final _SherpaKokoroManager instance = _SherpaKokoroManager._();
 
-  static const String defaultVoiceId = 'en_US-amy-low';
-
-  static String _tarballUrl(String voiceId) =>
+  static const String _bundleId = 'kokoro-int8-en-v0_19';
+  static const String _tarballUrl =
       'https://github.com/k2-fsa/sherpa-onnx/releases/download/'
-      'tts-models/vits-piper-$voiceId.tar.bz2';
+      'tts-models/$_bundleId.tar.bz2';
 
-  Future<Directory> _voiceDir(String voiceId) async {
+  Future<Directory> _bundleDir() async {
     final docs = await getApplicationDocumentsDirectory();
-    return Directory('${docs.path}/sherpa_voices/$voiceId');
+    return Directory('${docs.path}/sherpa_voices/$_bundleId');
   }
 
-  _PiperVoiceAssets _assetsFor(String voiceId, Directory dir) =>
-      _PiperVoiceAssets(
-        voiceId: voiceId,
-        modelPath: '${dir.path}/$voiceId.onnx',
+  _KokoroAssets _assetsFor(Directory dir) => _KokoroAssets(
+        modelPath: '${dir.path}/model.int8.onnx',
+        voicesPath: '${dir.path}/voices.bin',
         tokensPath: '${dir.path}/tokens.txt',
         dataDir: '${dir.path}/espeak-ng-data',
+        lexiconPath: '${dir.path}/lexicon-us-en.txt',
       );
 
-  bool _looksReady(_PiperVoiceAssets a) =>
+  bool _looksReady(_KokoroAssets a) =>
       File(a.modelPath).existsSync() &&
+      File(a.voicesPath).existsSync() &&
       File(a.tokensPath).existsSync() &&
       Directory(a.dataDir).existsSync();
 
-  Future<_PiperVoiceAssets?> ensureReady({
-    String voiceId = defaultVoiceId,
+  Future<_KokoroAssets?> ensureReady({
     void Function(double fraction)? onProgress,
   }) async {
-    final dir = await _voiceDir(voiceId);
-    final assets = _assetsFor(voiceId, dir);
+    final dir = await _bundleDir();
+    final assets = _assetsFor(dir);
     if (_looksReady(assets)) return assets;
 
     if (kDebugMode) {
-      debugPrint('Sherpa: voice "$voiceId" missing, downloading…');
+      debugPrint('Sherpa: Kokoro bundle missing, downloading…');
     }
     await dir.create(recursive: true);
 
     try {
-      final url = _tarballUrl(voiceId);
-      final request = http.Request('GET', Uri.parse(url));
+      final request = http.Request('GET', Uri.parse(_tarballUrl));
       final response = await http.Client().send(request);
       if (response.statusCode != 200) {
         if (kDebugMode) {
@@ -96,7 +102,7 @@ class _SherpaVoiceManager {
       final archive = TarDecoder().decodeBytes(tarBytes);
       for (final entry in archive.files) {
         if (!entry.isFile) continue;
-        // Strip the leading `vits-piper-<voiceId>/` prefix bundled by Sherpa.
+        // Strip the leading `<bundleId>/` prefix bundled by Sherpa.
         final segments = entry.name.split('/');
         if (segments.length < 2) continue;
         final relPath = segments.sublist(1).join('/');
@@ -105,20 +111,40 @@ class _SherpaVoiceManager {
         await outFile.parent.create(recursive: true);
         await outFile.writeAsBytes(entry.content as List<int>, flush: true);
       }
-      if (kDebugMode) debugPrint('Sherpa: voice "$voiceId" ready');
+      if (kDebugMode) debugPrint('Sherpa: Kokoro bundle ready');
       return _looksReady(assets) ? assets : null;
     } catch (e) {
-      if (kDebugMode) debugPrint('Sherpa: voice install failed: $e');
+      if (kDebugMode) debugPrint('Sherpa: Kokoro install failed: $e');
       return null;
     }
   }
 }
 
-/// Native (non-web) Sherpa-ONNX TTS engine. Synthesizes a Piper voice
-/// to PCM, writes a temp WAV, and plays it through `audioplayers`.
+/// Native (non-web) Sherpa-ONNX TTS engine using the Kokoro v0_19 INT8
+/// model. Runtime path for Custom Practice free-text input. Synthesizes
+/// PCM, writes a temp WAV, and plays it through `audioplayers`.
 class SherpaTtsEngine {
   SherpaTtsEngine._();
   static final SherpaTtsEngine instance = SherpaTtsEngine._();
+
+  /// Voice id → speaker id (sid) for the kokoro-en-v0_19 bundle.
+  /// Standard kokoro-onnx voices.bin ordering — the four voices the
+  /// app exposes plus the rest for safety. If a voice isn't in the
+  /// map we fall back to af_bella's sid.
+  static const Map<String, int> _sidByVoiceId = {
+    'af':          0,
+    'af_bella':    1,
+    'af_nicole':   2,
+    'af_sarah':    3,
+    'af_sky':      4,
+    'am_adam':     5,
+    'am_michael':  6,
+    'bf_emma':     7,
+    'bf_isabella': 8,
+    'bm_george':   9,
+    'bm_lewis':   10,
+  };
+  static const int _defaultSid = 1; // af_bella
 
   sherpa.OfflineTts? _tts;
   AudioPlayer? _player;
@@ -134,7 +160,7 @@ class SherpaTtsEngine {
   bool get isInitialized => _initialized;
   bool get isSpeaking => _isSpeaking;
 
-  /// Idempotent. Returns `false` if the voice can't be installed —
+  /// Idempotent. Returns `false` if the Kokoro bundle can't be installed —
   /// callers should fall back to flutter_tts in that case.
   Future<bool> initialize() async {
     if (_initialized) return true;
@@ -145,18 +171,22 @@ class SherpaTtsEngine {
 
     try {
       sherpa.initBindings();
-      final voice = await _SherpaVoiceManager.instance.ensureReady();
-      if (voice == null) {
+      final assets = await _SherpaKokoroManager.instance.ensureReady();
+      if (assets == null) {
         completer.complete(false);
         return false;
       }
       _tts = sherpa.OfflineTts(
         sherpa.OfflineTtsConfig(
           model: sherpa.OfflineTtsModelConfig(
-            vits: sherpa.OfflineTtsVitsModelConfig(
-              model: voice.modelPath,
-              tokens: voice.tokensPath,
-              dataDir: voice.dataDir,
+            kokoro: sherpa.OfflineTtsKokoroModelConfig(
+              model: assets.modelPath,
+              voices: assets.voicesPath,
+              tokens: assets.tokensPath,
+              dataDir: assets.dataDir,
+              lexicon: File(assets.lexiconPath).existsSync()
+                  ? assets.lexiconPath
+                  : '',
             ),
             numThreads: 2,
             debug: false,
@@ -168,22 +198,30 @@ class SherpaTtsEngine {
       completer.complete(true);
       return true;
     } catch (e) {
-      if (kDebugMode) debugPrint('Sherpa init failed: $e');
+      if (kDebugMode) debugPrint('Sherpa Kokoro init failed: $e');
       completer.complete(false);
       return false;
     }
   }
 
-  Future<bool> speak(String text, {double speed = 1.0}) async {
+  /// Synthesize [text] with the given Kokoro [voice] (e.g. `'af_bella'`).
+  /// Unknown voice ids fall back to af_bella.
+  Future<bool> speak(
+    String text, {
+    double speed = 1.0,
+    String voice = 'af_bella',
+  }) async {
     if (!_initialized || _tts == null || _player == null) return false;
     if (text.trim().isEmpty) return false;
     await stop();
 
+    final sid = _sidByVoiceId[voice] ?? _defaultSid;
+
     final sherpa.GeneratedAudio audio;
     try {
-      audio = _tts!.generate(text: text, sid: 0, speed: speed);
+      audio = _tts!.generate(text: text, sid: sid, speed: speed);
     } catch (e) {
-      if (kDebugMode) debugPrint('Sherpa generate failed: $e');
+      if (kDebugMode) debugPrint('Sherpa Kokoro generate failed: $e');
       return false;
     }
     if (audio.samples.isEmpty || audio.sampleRate <= 0) return false;
@@ -213,7 +251,7 @@ class SherpaTtsEngine {
       await _player!.setReleaseMode(ReleaseMode.release);
       await _player!.play(DeviceFileSource(outPath));
     } catch (e) {
-      if (kDebugMode) debugPrint('Sherpa playback failed: $e');
+      if (kDebugMode) debugPrint('Sherpa Kokoro playback failed: $e');
       _isSpeaking = false;
       _completeSpeech(false);
     }

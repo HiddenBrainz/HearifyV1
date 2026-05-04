@@ -51,6 +51,7 @@ dependencies:
   json_annotation: ^4.9.0
   http: ^1.2.0
   archive: ^3.6.1
+  crypto: ^3.0.3
 
   # UI helpers
   fl_chart: ^0.68.0
@@ -83,3 +84,10 @@ flutter:
     - assets/audio/Syllables/
     - assets/audio/Sentences/
     - assets/audio/Word Recognition/
+    # Pre-rendered Kokoro FP16 MP3s — populated by `tools/prerender_tts.py`.
+    # One subdir per voice; flat hash filenames inside.
+    - assets/audio/tts/
+    - assets/audio/tts/af_bella/
+    - assets/audio/tts/af_sarah/
+    - assets/audio/tts/am_adam/
+    - assets/audio/tts/am_michael/

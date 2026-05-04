@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Pre-render pipeline (TTS asset generation) — heavy ONNX models +
+# Python venv. Re-fetched/recreated on demand by tools/kokoro_download.py.
+/.prerender_cache/
+/tools/.venv/
