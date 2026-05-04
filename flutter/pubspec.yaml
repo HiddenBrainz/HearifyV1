@@ -59,6 +59,14 @@ dependencies:
   url_launcher: ^6.3.0
   intl: ^0.19.0
 
+dependency_overrides:
+  # `record 5.2.1` pins `record_linux: 0.7.2`, which is incompatible
+  # with `record_platform_interface: 1.5.0` (missing `startStream`,
+  # stale `hasPermission` signature). Force a newer record_linux that
+  # implements the current interface so the AOT kernel-snapshot pass
+  # compiles every platform stub cleanly.
+  record_linux: ^1.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -72,6 +80,25 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # One canonical font (Inter) used everywhere via the dark `AppTheme`
+  # textTheme. Each weight points at the same variable font file —
+  # Flutter resolves the right axis at render time when the requested
+  # FontWeight matches one of the declared entries.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+          weight: 400
+        - asset: assets/fonts/Inter.ttf
+          weight: 500
+        - asset: assets/fonts/Inter.ttf
+          weight: 600
+        - asset: assets/fonts/Inter.ttf
+          weight: 700
+        - asset: assets/fonts/Inter.ttf
+          weight: 800
+
   assets:
     - assets/csv/
     - assets/audio/

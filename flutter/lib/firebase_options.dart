@@ -23,10 +23,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -65,5 +62,16 @@ class DefaultFirebaseOptions {
     messagingSenderId: '443808602359',
     projectId: 'hearify-1c669',
     storageBucket: 'hearify-1c669.firebasestorage.app',
+  );
+
+  // Values mirror ios/Runner/GoogleService-Info.plist for the
+  // `com.hearify.hearify` bundle id.
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyC2dL6bBUBldfLlabRMZ72kont_J5msTX8',
+    appId: '1:443808602359:ios:5124702c744b0e30665bf2',
+    messagingSenderId: '443808602359',
+    projectId: 'hearify-1c669',
+    storageBucket: 'hearify-1c669.firebasestorage.app',
+    iosBundleId: 'com.hearify.hearify',
   );
 }

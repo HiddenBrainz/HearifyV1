@@ -3,9 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/auth_design_system.dart';
-import '../../auth/presentation/widgets/gradient_primary_button.dart';
 import '../data/exercise_repository.dart';
 import '../domain/classic_exercise.dart';
 import 'custom_practice_screen.dart';
@@ -27,7 +25,6 @@ class TrainingCategoriesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final b = Theme.of(context).brightness;
     final categories = ClassicExerciseCategory.values;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -42,49 +39,33 @@ class TrainingCategoriesScreen extends ConsumerWidget {
             gradient: AppGradients.screenBackground,
           ),
           child: SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+            child: Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.l,
                 AppSpacing.l,
                 AppSpacing.l,
-                AppSpacing.xl,
+                AppSpacing.l,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _TopBar(onSettings: () => context.push('/settings')),
-                  const SizedBox(height: AppSpacing.xl),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: categories.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: AppSpacing.l,
-                      crossAxisSpacing: AppSpacing.l,
-                      childAspectRatio: 1.0,
-                    ),
-                    itemBuilder: (_, i) => CategoryCard(
-                      category: categories[i],
-                      onTap: () => _launch(context, ref, categories[i]),
-                    ),
-                  ),
                   const SizedBox(height: AppSpacing.l),
+                  // Cards stay square via AspectRatio. The grid is only
+                  // as tall as it needs to be; the Spacer below absorbs
+                  // any leftover vertical space so we don't end up with
+                  // huge gaps between rows on tall phones.
+                  _CategoriesGrid(
+                    categories: categories,
+                    onTap: (c) => _launch(context, ref, c),
+                  ),
+                  const Spacer(),
                   FeaturedInsightsCard(
                     title: 'Practice Insights',
                     subtitle:
                         'View practice patterns and ideas to discuss with your audiologist',
                     icon: Icons.psychology_outlined,
                     onTap: () => context.push('/progress'),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  GradientPrimaryButton(
-                    label: 'My Practice List (0 items)',
-                    leadingIcon: Icons.bookmark_outline,
-                    gradient: AppTheme.accentGradient(b),
-                    onPressed: () => context.push('/practice-list'),
                   ),
                 ],
               ),
@@ -142,6 +123,55 @@ class TrainingCategoriesScreen extends ConsumerWidget {
           MaterialPageRoute(builder: (_) => const CustomPracticeScreen()),
         );
     }
+  }
+}
+
+/// 2 × 3 grid of category cards. Each card stays square via
+/// `AspectRatio`, so the grid takes only the height it needs and the
+/// surrounding Column's `Spacer` absorbs any leftover space — no more
+/// rows that stretch into airy rectangles on tall phones.
+class _CategoriesGrid extends StatelessWidget {
+  const _CategoriesGrid({required this.categories, required this.onTap});
+
+  final List<ClassicExerciseCategory> categories;
+  final ValueChanged<ClassicExerciseCategory> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget row(int a, int b) => Row(
+          children: [
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: CategoryCard(
+                  category: categories[a],
+                  onTap: () => onTap(categories[a]),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.m),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: CategoryCard(
+                  category: categories[b],
+                  onTap: () => onTap(categories[b]),
+                ),
+              ),
+            ),
+          ],
+        );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        row(0, 1),
+        const SizedBox(height: AppSpacing.m),
+        row(2, 3),
+        const SizedBox(height: AppSpacing.m),
+        row(4, 5),
+      ],
+    );
   }
 }
 

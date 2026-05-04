@@ -165,7 +165,14 @@ class AppShadows {
 class AppTextStyles {
   AppTextStyles._();
 
+  /// Single canonical font used by every text style here. Mirrored in
+  /// `AppTheme.fontFamily`; every weight referenced below (w400 → w800)
+  /// is declared in `pubspec.yaml` so Flutter's font resolver picks the
+  /// right glyph variant at render time.
+  static const String _font = 'Inter';
+
   static const TextStyle title = TextStyle(
+    fontFamily: _font,
     fontSize: 38,
     fontWeight: FontWeight.w800,
     color: AppColors.textPrimary,
@@ -174,6 +181,7 @@ class AppTextStyles {
   );
 
   static const TextStyle subtitle = TextStyle(
+    fontFamily: _font,
     fontSize: 19,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
@@ -181,6 +189,7 @@ class AppTextStyles {
   );
 
   static const TextStyle inputLabel = TextStyle(
+    fontFamily: _font,
     fontSize: 15,
     fontWeight: FontWeight.w500,
     color: AppColors.textInactive,
@@ -188,12 +197,14 @@ class AppTextStyles {
   );
 
   static const TextStyle inputText = TextStyle(
+    fontFamily: _font,
     fontSize: 17,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle placeholder = TextStyle(
+    fontFamily: _font,
     fontSize: 17,
     fontWeight: FontWeight.w400,
     color: AppColors.textPlaceholder,
@@ -201,12 +212,14 @@ class AppTextStyles {
 
   /// Matches the brand-blue example placeholder seen in the mock.
   static const TextStyle emailPlaceholder = TextStyle(
+    fontFamily: _font,
     fontSize: 17,
     fontWeight: FontWeight.w400,
     color: AppColors.linkBlue,
   );
 
   static const TextStyle ctaLabel = TextStyle(
+    fontFamily: _font,
     fontSize: 17,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
@@ -214,18 +227,21 @@ class AppTextStyles {
   );
 
   static const TextStyle segmentLabelActive = TextStyle(
+    fontFamily: _font,
     fontSize: 15,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle segmentLabelInactive = TextStyle(
+    fontFamily: _font,
     fontSize: 15,
     fontWeight: FontWeight.w600,
     color: AppColors.textInactive,
   );
 
   static const TextStyle helperLink = TextStyle(
+    fontFamily: _font,
     fontSize: 15,
     fontWeight: FontWeight.w500,
     color: AppColors.linkBlue,
@@ -233,6 +249,7 @@ class AppTextStyles {
   );
 
   static const TextStyle error = TextStyle(
+    fontFamily: _font,
     fontSize: 13,
     fontWeight: FontWeight.w500,
     color: AppColors.errorText,

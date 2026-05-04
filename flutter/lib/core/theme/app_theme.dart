@@ -104,6 +104,14 @@ class AppTheme {
   static ThemeData light() => _buildTheme(Brightness.light);
   static ThemeData dark() => _buildTheme(Brightness.dark);
 
+  /// Single canonical font for every screen. Bundled at
+  /// `assets/fonts/Inter.ttf` and declared in `pubspec.yaml` with weights
+  /// 400/500/600/700/800. Setting it via `fontFamily` + `textTheme.apply`
+  /// guarantees identical typography on iOS, Android, and web — without
+  /// it, each platform falls back to its own system font (SF Pro / Roboto
+  /// / browser default) and the UI looks subtly different per device.
+  static const String fontFamily = 'Inter';
+
   static ThemeData _buildTheme(Brightness b) {
     final scheme = ColorScheme.fromSeed(
       seedColor: primaryBlue(b),
@@ -114,9 +122,11 @@ class AppTheme {
       error: error(b),
       surface: cardBackground(b),
     );
+    final base = ThemeData(brightness: b, useMaterial3: true);
     return ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
+      fontFamily: fontFamily,
       scaffoldBackgroundColor: backgroundPrimary(b),
       cardTheme: CardThemeData(
         color: cardBackground(b),
@@ -125,10 +135,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusLarge),
         ),
       ),
-      textTheme: ThemeData(brightness: b).textTheme.apply(
-            bodyColor: textPrimary(b),
-            displayColor: textPrimary(b),
-          ),
+      textTheme: base.textTheme.apply(
+        fontFamily: fontFamily,
+        bodyColor: textPrimary(b),
+        displayColor: textPrimary(b),
+      ),
+      primaryTextTheme: base.primaryTextTheme.apply(fontFamily: fontFamily),
     );
   }
 }

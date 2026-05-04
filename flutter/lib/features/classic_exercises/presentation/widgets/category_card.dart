@@ -50,19 +50,25 @@ class CategoryCard extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.l),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(category.icon, size: 44, color: accent),
-                const SizedBox(height: AppSpacing.m),
-                Text(
-                  category.displayName,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.ctaLabel,
-                ),
-              ],
+            // FittedBox absorbs overflow when the cell shrinks on small
+            // phones — the icon + label scale down together instead of
+            // tripping a RenderFlex overflow assertion.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(category.icon, size: 44, color: accent),
+                  const SizedBox(height: AppSpacing.m),
+                  Text(
+                    category.displayName,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.ctaLabel,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

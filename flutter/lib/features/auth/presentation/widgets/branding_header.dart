@@ -22,9 +22,9 @@ class BrandingHeader extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _LogoCircle(mark: mark),
-        const SizedBox(height: AppSpacing.xxl),
+        const SizedBox(height: AppSpacing.l),
         Text(title, textAlign: TextAlign.center, style: AppTextStyles.title),
-        const SizedBox(height: AppSpacing.m),
+        const SizedBox(height: AppSpacing.s),
         Text(subtitle,
             textAlign: TextAlign.center, style: AppTextStyles.subtitle),
       ],
@@ -40,8 +40,8 @@ class _LogoCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 132,
-      height: 132,
+      width: 96,
+      height: 96,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
         gradient: AppGradients.logoCircle,
@@ -51,7 +51,7 @@ class _LogoCircle extends StatelessWidget {
         child: ShaderMask(
           shaderCallback: (rect) => AppGradients.logoMark.createShader(rect),
           blendMode: BlendMode.srcIn,
-          child: Icon(mark, size: 72, color: Colors.white),
+          child: Icon(mark, size: 52, color: Colors.white),
         ),
       ),
     );

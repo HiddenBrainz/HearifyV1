@@ -55,23 +55,32 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
       ),
       child: Scaffold(
         backgroundColor: AppColors.bgPrimary,
+        // Resize so when the keyboard appears, the form lifts above it
+        // — but the unfocused layout is sized to fit on a single screen
+        // (no scroll bar, no clipped CTA).
+        resizeToAvoidBottomInset: true,
         body: DecoratedBox(
           decoration: const BoxDecoration(
             gradient: AppGradients.screenBackground,
           ),
           child: SafeArea(
+            // Plain SingleChildScrollView: when the content fits (it does,
+            // after the padding + logo trims below), the screen looks
+            // un-scrolled; when the keyboard pops up the scroll view lifts
+            // the focused field above it. No IntrinsicHeight gymnastics —
+            // some children (segmented toggle, text fields) don't expose
+            // intrinsic dimensions and explode that path on iOS.
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.xxl,
-                AppSpacing.huge,
+                AppSpacing.l,
                 AppSpacing.xxl,
-                AppSpacing.xxl,
+                AppSpacing.l,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: AppSpacing.huge),
                   BrandingHeader(
                     title: 'Hearify',
                     subtitle: _role == UserRole.clinician
@@ -81,7 +90,7 @@ class _PatientLoginScreenState extends ConsumerState<PatientLoginScreen> {
                         ? Icons.medical_services_rounded
                         : Icons.hearing_rounded,
                   ),
-                  const SizedBox(height: AppSpacing.huge),
+                  const SizedBox(height: AppSpacing.xl),
                   _AuthForm(
                     roleSegment: _roleSegment,
                     segment: _segment,
@@ -198,13 +207,13 @@ class _AuthForm extends StatelessWidget {
             selectedIndex: roleSegment,
             onChanged: onRoleChanged,
           ),
-          const SizedBox(height: AppSpacing.l),
+          const SizedBox(height: AppSpacing.m),
           AuthSegmentedToggle(
             labels: const ['Sign In', 'Sign Up'],
             selectedIndex: segment,
             onChanged: onSegmentChanged,
           ),
-          const SizedBox(height: AppSpacing.xxxl),
+          const SizedBox(height: AppSpacing.xl),
           if (isSignUp) ...[
             HearifyTextField(
               label: 'Full Name',
@@ -213,7 +222,7 @@ class _AuthForm extends StatelessWidget {
               textInputAction: TextInputAction.next,
               keyboardType: TextInputType.name,
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.l),
           ],
           HearifyTextField(
             label: 'Email',
@@ -226,7 +235,7 @@ class _AuthForm extends StatelessWidget {
             enableSuggestions: false,
             inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.l),
           HearifyTextField(
             label: 'Password',
             controller: password,
@@ -238,10 +247,10 @@ class _AuthForm extends StatelessWidget {
             onSubmitted: (_) => onSubmit(),
           ),
           if (error != null) ...[
-            const SizedBox(height: AppSpacing.l),
+            const SizedBox(height: AppSpacing.m),
             Text(error!, style: AppTextStyles.error),
           ],
-          const SizedBox(height: AppSpacing.xxxl),
+          const SizedBox(height: AppSpacing.xl),
           GradientPrimaryButton(
             label: isSignUp ? 'Create Account' : 'Sign In',
             leadingIcon: isSignUp
@@ -250,7 +259,7 @@ class _AuthForm extends StatelessWidget {
             loading: busy,
             onPressed: busy ? null : onSubmit,
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.m),
           Center(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,

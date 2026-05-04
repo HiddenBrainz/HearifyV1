@@ -50,29 +50,48 @@ class FeaturedInsightsCard extends StatelessWidget {
           splashColor: accent.withValues(alpha: 0.14),
           highlightColor: accent.withValues(alpha: 0.08),
           onTap: onTap,
+          // Compact horizontal list-row layout: icon on the left, title +
+          // subtitle stacked on the right, chevron at the end. Cuts the
+          // card from ~155 px tall to ~72 px while keeping the brand
+          // accent + glow that signals it's a top-level destination.
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.xl,
-              vertical: AppSpacing.xl,
+              horizontal: AppSpacing.l,
+              vertical: AppSpacing.m,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Row(
               children: [
-                Icon(icon, size: 44, color: accent),
-                const SizedBox(height: AppSpacing.m),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.ctaLabel,
-                ),
-                const SizedBox(height: AppSpacing.s),
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  style: AppTextStyles.inputLabel.copyWith(
-                    color: AppColors.textSecondary,
+                Icon(icon, size: 28, color: accent),
+                const SizedBox(width: AppSpacing.m),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyles.ctaLabel.copyWith(fontSize: 15),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.inputLabel.copyWith(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                const SizedBox(width: AppSpacing.s),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: AppColors.textSecondary,
                 ),
               ],
             ),

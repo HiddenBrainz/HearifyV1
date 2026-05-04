@@ -20,9 +20,13 @@ class HearifyApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Hearify',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
+      // The app's premium dark aesthetic (auth-card gradients, accent
+      // colors on dark surfaces) is the design intent everywhere; the
+      // light theme was never built out, so force dark on every device
+      // regardless of the system appearance.
+      theme: AppTheme.dark(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       routerConfig: router,
     );
   }
