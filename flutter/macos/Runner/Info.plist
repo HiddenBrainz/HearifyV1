@@ -28,5 +28,14 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<!-- Same TCC strings the iOS bundle ships — required on macOS too,
+	     since the open-set / speak-back exercises use SFSpeechRecognizer
+	     and the AVAudioEngine mic input on desktop builds. The bundle
+	     also needs the matching entitlement flags in
+	     Runner/{DebugProfile,Release}.entitlements. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Hearify uses the microphone to score open-set repeat-back exercises and to record voice samples for your audiologist.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Hearify uses on-device speech recognition to compare what you say to the target word or sentence so it can score your response in real time.</string>
 </dict>
 </plist>

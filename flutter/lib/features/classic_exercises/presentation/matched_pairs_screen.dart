@@ -8,6 +8,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../services/audio_service.dart';
 import '../../../shared/widgets/modern_card.dart';
 import '../../../shared/data/practice_history.dart';
+import '../../../shared/data/phonetic_taxonomy.dart';
+import '../../clinician/data/session_writer.dart';
 import '../data/exercise_repository.dart';
 import '../domain/classic_exercise.dart';
 import '../domain/session_config.dart';
@@ -39,6 +41,11 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
   bool _revealed = false;
   Timer? _autoAdvance;
 
+  // Per-session attempts captured for the clinical-dashboard aggregate.
+  final List<PracticeAttempt> _sessionAttempts = [];
+  DateTime _sessionStart = DateTime.now();
+  DateTime? _promptFinishedAt;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +71,7 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
       _session = _drawSession();
       _loading = false;
     });
+    _sessionStart = DateTime.now();
     _playCurrent();
   }
 
@@ -85,6 +93,7 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
     await ref
         .read(audioServiceProvider)
         .speak(_targetIsFirst ? p.first : p.second);
+    _promptFinishedAt = DateTime.now();
   }
 
   void _pick(String word) {
@@ -97,14 +106,21 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
       _revealed = true;
       if (isCorrect) _correct++;
     });
-    ref.read(practiceHistoryProvider.notifier).add(
-          PracticeAttempt(
-            target: target,
-            heard: word,
-            score: isCorrect ? 1 : 0,
-            timestamp: DateTime.now(),
-          ),
-        );
+    final responseTimeMs = _promptFinishedAt == null
+        ? null
+        : DateTime.now().difference(_promptFinishedAt!).inMilliseconds;
+    final attempt = PracticeAttempt(
+      target: target,
+      heard: word,
+      score: isCorrect ? 1 : 0,
+      timestamp: DateTime.now(),
+      exerciseType: ExerciseType.matchedPairs,
+      categoryTag: matchedPairsCategoryTag(widget.subcategory),
+      responseTimeMs: responseTimeMs,
+      wrongChoice: isCorrect ? null : word,
+    );
+    _sessionAttempts.add(attempt);
+    ref.read(practiceHistoryProvider.notifier).add(attempt);
     if (isCorrect) {
       // Let the green check read for a beat, then move on automatically.
       _autoAdvance?.cancel();
@@ -131,6 +147,8 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
 
   void _startNewSession() {
     _autoAdvance?.cancel();
+    _sessionAttempts.clear();
+    _sessionStart = DateTime.now();
     setState(() {
       _session = _drawSession();
       _index = 0;
@@ -166,6 +184,13 @@ class _MatchedPairsScreenState extends ConsumerState<MatchedPairsScreen> {
 
   Future<void> _showSummary() async {
     await ref.read(audioServiceProvider).stop();
+    unawaited(
+      ref.read(sessionWriterProvider).writeSession(
+            exerciseType: ExerciseType.matchedPairs,
+            attempts: List<PracticeAttempt>.unmodifiable(_sessionAttempts),
+            duration: DateTime.now().difference(_sessionStart),
+          ),
+    );
     if (!mounted) return;
     final answered = _revealed ? _index + 1 : _index;
     final pct = answered == 0 ? 0.0 : _correct / answered;

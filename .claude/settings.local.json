@@ -34,7 +34,18 @@
       "Bash(git rm *)",
       "Bash(osascript *)",
       "Bash(awk 'NR>=4300 && NR<=4520' /Users/vedantnahar/Downloads/HearifyV1/ios-legacy/HearifyV1/ContentView.swift)",
-      "Bash(awk NR>=2716 && NR<=2740 *)"
+      "Bash(awk NR>=2716 && NR<=2740 *)",
+      "Bash(tools/.venv/bin/pip list *)",
+      "Bash(tools/.venv/bin/python tools/kokoro_download.py)",
+      "Bash(tools/.venv/bin/pip install *)",
+      "Bash(tools/.venv/bin/python -c ' *)",
+      "Bash(curl -sL \"https://api.github.com/repos/thewh1teagle/kokoro-onnx/releases/tags/model-files\")",
+      "Read(//tmp/**)",
+      "Bash(tee /tmp/android_build3.log)",
+      "Bash(ps -e -o pid,pcpu,pmem,etime,comm)",
+      "Bash(sort -k2 -rn)",
+      "Bash(ps -e -o pid,pcpu,etime,command)",
+      "Bash(ps -e -o pid,etime,command)"
     ]
   }
 }

@@ -741,6 +741,17 @@ Color _riskColor(RiskLevel level, Brightness b) {
   }
 }
 
-final patientsStreamProvider = StreamProvider<List<LinkedPatient>>((ref) {
+/// `.autoDispose` is critical here — without it the StreamProvider
+/// caches the stream subscription across navigation. When the
+/// audiologist signs OUT, Firebase tears down the auth context and the
+/// still-listening `clinicians/{uid}.snapshots()` errors with
+/// `permission-denied`, parking this provider in `AsyncError`. When
+/// they sign back IN, the dashboard reads the same cached provider
+/// and re-displays the stale error before any retry can fire.
+/// AutoDispose forces a brand-new subscription each time the
+/// dashboard mounts, which is fired AFTER signIn has propagated the
+/// new auth token to Firestore.
+final patientsStreamProvider =
+    StreamProvider.autoDispose<List<LinkedPatient>>((ref) {
   return ref.read(clinicianRepositoryProvider).watchMyPatients();
 });

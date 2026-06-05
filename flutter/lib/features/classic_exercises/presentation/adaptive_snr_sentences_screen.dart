@@ -10,7 +10,9 @@ import '../../../core/theme/auth_design_system.dart';
 import '../../../services/audio_service.dart';
 import '../../../services/speech_recognition_service.dart';
 import '../../../shared/data/practice_history.dart';
+import '../../../shared/data/phonetic_taxonomy.dart';
 import '../../../shared/widgets/modern_card.dart';
+import '../../clinician/data/session_writer.dart';
 import '../data/exercise_repository.dart';
 import '../domain/classic_exercise.dart';
 
@@ -46,6 +48,10 @@ class _AdaptiveSnrSentencesScreenState
   int? _lastMatched;
   String? _loadError;
   Timer? _autoAdvance;
+
+  // Per-session attempts captured for the clinical-dashboard aggregate.
+  final List<PracticeAttempt> _sessionAttempts = [];
+  DateTime _sessionStart = DateTime.now();
 
   @override
   void initState() {
@@ -105,6 +111,7 @@ class _AdaptiveSnrSentencesScreenState
     // Background noise + initial speech are best-effort — if either
     // fails (permission, missing asset, web autoplay) the user can
     // still tap Play and the screen survives.
+    _sessionStart = DateTime.now();
     unawaited(_setNoiseForCurrent());
     unawaited(_playCurrent());
   }
@@ -161,14 +168,17 @@ class _AdaptiveSnrSentencesScreenState
       _lastMatched = matched;
       _keyWordsCorrect += matched;
     });
-    ref.read(practiceHistoryProvider.notifier).add(
-          PracticeAttempt(
-            target: c.sentence,
-            heard: heard,
-            score: c.keyWords == 0 ? 0 : matched / c.keyWords,
-            timestamp: DateTime.now(),
-          ),
-        );
+    final attempt = PracticeAttempt(
+      target: c.sentence,
+      heard: heard,
+      score: c.keyWords == 0 ? 0 : matched / c.keyWords,
+      timestamp: DateTime.now(),
+      exerciseType: ExerciseType.bkbSin,
+      categoryTag: PhoneticCategory.sentenceNoise,
+      snrDb: c.snrDb.toDouble(),
+    );
+    _sessionAttempts.add(attempt);
+    ref.read(practiceHistoryProvider.notifier).add(attempt);
     // Always auto-advance — adaptive lists must be heard end-to-end so
     // the SNR-50 sum is meaningful.
     _autoAdvance?.cancel();
@@ -205,6 +215,8 @@ class _AdaptiveSnrSentencesScreenState
     final groups =
         await ref.read(exerciseRepositoryProvider).loadBkbSinByList();
     if (!mounted) return;
+    _sessionAttempts.clear();
+    _sessionStart = DateTime.now();
     setState(() {
       _listId = pick;
       _session = groups[pick] ?? const [];
@@ -248,8 +260,16 @@ class _AdaptiveSnrSentencesScreenState
     await ref.read(audioServiceProvider).stop();
     await ref.read(audioServiceProvider).stopBackgroundNoise();
     await ref.read(sttServiceProvider).cancel();
-    if (!mounted) return;
     final snr50 = _snr50K - _keyWordsCorrect;
+    unawaited(
+      ref.read(sessionWriterProvider).writeSession(
+            exerciseType: ExerciseType.bkbSin,
+            attempts: List<PracticeAttempt>.unmodifiable(_sessionAttempts),
+            duration: DateTime.now().difference(_sessionStart),
+            snr50: snr50,
+          ),
+    );
+    if (!mounted) return;
     final totalKeyWords =
         _session.fold<int>(0, (a, b) => a + b.keyWords);
     final b = Theme.of(context).brightness;

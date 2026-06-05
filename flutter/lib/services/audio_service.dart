@@ -198,6 +198,13 @@ class AudioService extends ChangeNotifier {
     try {
       await _foreground.setReleaseMode(ReleaseMode.release);
       await _foreground.setVolume(_currentVolume);
+      // audioplayers' rate scale matches the Settings slider directly
+      // (1.0 = normal, 0.5..2.0 = the user range). Wrap in try/catch
+      // because the web backend can silently reject rate changes — we
+      // accept "no speed change on web" rather than throwing.
+      try {
+        await _foreground.setPlaybackRate(_currentSpeed);
+      } catch (_) {/* unsupported on this platform */}
       await _foreground.play(source);
     } catch (e) {
       debugPrint('[TTS-Player] FAILED for ${source.path}: $e');
@@ -298,6 +305,13 @@ class AudioService extends ChangeNotifier {
     _currentSpeed = s.clamp(0.5, 2.0);
     await _ensureInit();
     await _tts.setSpeechRate(_convertSpeedToRate(_currentSpeed));
+    // Apply the new rate to the foreground (pre-rendered MP3) player
+    // too so a speed change mid-session takes effect on the next clip.
+    // Sherpa picks up the change automatically on its next `speak()`
+    // call because we pass `speed: _currentSpeed` per utterance.
+    try {
+      await _foreground.setPlaybackRate(_currentSpeed);
+    } catch (_) {/* unsupported on this platform */}
     notifyListeners();
   }
 

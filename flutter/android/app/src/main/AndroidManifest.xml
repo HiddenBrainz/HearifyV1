@@ -1,4 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Runtime permissions used by the open-set / speak-back exercises
+         (Word Recognition L2/L3, Sentence Comprehension L3 Open Set,
+         Words-in-Noise, BKB-SIN, Custom Practice). RECORD_AUDIO is the
+         only mic permission Android needs; speech_to_text dispatches
+         to the on-device recognizer with that grant. INTERNET +
+         ACCESS_NETWORK_STATE cover Firebase + the first-launch Sherpa
+         Kokoro model download. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
     <application
         android:label="hearify"
         android:name="${applicationName}"

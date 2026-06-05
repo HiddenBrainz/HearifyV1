@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/auth_design_system.dart';
+import '../../../shared/data/phonetic_taxonomy.dart';
 import '../../../shared/widgets/modern_card.dart';
 import '../../../shared/data/practice_history.dart';
 import '../data/gamification_controller.dart';
@@ -31,6 +33,8 @@ class ProgressDashboardScreen extends ConsumerWidget {
             _statsRow(gam, b),
             const SizedBox(height: AppTheme.spacingM),
             _levelCard(gam, b),
+            const SizedBox(height: AppTheme.spacingM),
+            _WeakestFeatureCard(history: history),
             const SizedBox(height: AppTheme.spacingM),
             _accuracyChartCard(history, b),
             const SizedBox(height: AppTheme.spacingM),
@@ -270,4 +274,95 @@ class ProgressDashboardScreen extends ConsumerWidget {
           ],
         ),
       );
+}
+
+/// Surfaces the lowest-accuracy phoneme bucket from the patient's
+/// recent practice (the same `byCategory` data the audiologist sees on
+/// their dashboard, just trimmed to one line + an action). Hidden when
+/// nothing useful has been collected yet (forward-only — old attempts
+/// have no `categoryTag`).
+class _WeakestFeatureCard extends StatelessWidget {
+  const _WeakestFeatureCard({required this.history});
+
+  final List<PracticeAttempt> history;
+
+  @override
+  Widget build(BuildContext context) {
+    final sums = history.accuracyByCategory(
+      keepOnly: PhoneticCategory.heatmapOrder.toSet(),
+    );
+    if (sums.isEmpty) return const SizedBox.shrink();
+
+    // Need at least 6 attempts in a bucket to call it out — otherwise
+    // a single miss looks catastrophic.
+    final candidates = sums.entries
+        .where((e) => e.value.total >= 6)
+        .map((e) => (
+              tag: e.key,
+              acc: e.value.correct / e.value.total,
+              total: e.value.total,
+            ))
+        .toList()
+      ..sort((a, b) => a.acc.compareTo(b.acc));
+    if (candidates.isEmpty) return const SizedBox.shrink();
+
+    final weakest = candidates.first;
+    // Only nudge when the bucket is actually weak (<80%) — a patient
+    // crushing every drill doesn't need a "your weakest is X" message.
+    if (weakest.acc >= 0.8) return const SizedBox.shrink();
+
+    final pct = (weakest.acc * 100).round();
+    final label = PhoneticCategory.displayName(weakest.tag);
+    final accent = AppColors.gradientPurple;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: AppGradients.authCard,
+        borderRadius: BorderRadius.circular(AppRadii.button),
+        border: Border.all(color: accent.withValues(alpha: 0.5), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.18),
+            blurRadius: 24,
+            spreadRadius: -8,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.l),
+        child: Row(
+          children: [
+            Icon(Icons.center_focus_strong_rounded,
+                size: 28, color: accent),
+            const SizedBox(width: AppSpacing.m),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Today\'s focus: $label',
+                    style: AppTextStyles.ctaLabel.copyWith(fontSize: 15),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'You\'re at $pct% on $label across your last '
+                    '${weakest.total} attempts. A short focused drill '
+                    'helps close the gap.',
+                    style: AppTextStyles.inputLabel.copyWith(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

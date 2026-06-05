@@ -70,6 +70,7 @@ class AuthController extends StateNotifier<AuthState> {
   final Ref _ref;
 
   Future<void> _restoreSession(User u) async {
+    await _waitForFirestoreAuth(u.uid);
     final role = await _detectRole(u.uid);
     if (role == UserRole.patient) {
       await _hydrateFromPatientDoc(u.uid);
@@ -80,6 +81,85 @@ class AuthController extends StateNotifier<AuthState> {
       displayName: u.displayName,
       role: role,
     );
+  }
+
+  /// After `signInWithEmailAndPassword` returns, the FirebaseAuth SDK
+  /// has the new ID token but Firestore's internal auth listener may
+  /// not have caught up yet. Any read or `.snapshots()` subscription
+  /// fired during that window latches onto the stale (signed-out)
+  /// auth context and emits `permission-denied`.
+  ///
+  /// Forcing a token refresh isn't enough — the *Firestore* side has
+  /// to receive the propagation. So we positively verify it: wait
+  /// for `idTokenChanges()` to emit, then probe a doc the rules
+  /// always allow for `isSelf` (`clinicians/{uid}` works regardless
+  /// of role since the rule allows the request even when the doc is
+  /// missing). Any `permission-denied` retries with backoff.
+  ///
+  /// This is what the user described as "the await problem" — without
+  /// it, hot-restart works (cached token is propagated) but a fresh
+  /// sign-in races and fails.
+  Future<void> _waitForFirestoreAuth(String uid) async {
+    dev.log('starting auth warmup for $uid', name: 'AuthController');
+    // Step 1: force a fresh token + wait for the auth listener to fire.
+    try {
+      await FirebaseAuth.instance.currentUser?.getIdToken(true);
+      final settled = await FirebaseAuth.instance
+          .idTokenChanges()
+          .firstWhere((u) => u != null && u.uid == uid)
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      dev.log(
+        'idToken listener settled (user=${settled?.uid})',
+        name: 'AuthController',
+      );
+    } catch (e) {
+      dev.log('idToken propagation wait failed: $e', name: 'AuthController');
+    }
+
+    // Step 2: warmup probe — read a doc the rules always allow for
+    // `isSelf` (clinicians/{uid} works regardless of role even when
+    // the doc is missing). If this succeeds, the Firestore SDK has
+    // a propagated auth token attached to its gRPC channel, and
+    // subsequent `.get()` and `.snapshots()` calls will work.
+    const maxAttempts = 6;
+    const baseDelay = Duration(milliseconds: 250);
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('clinicians')
+            .doc(uid)
+            .get();
+        dev.log(
+          'auth warmup OK on attempt ${attempt + 1}',
+          name: 'AuthController',
+        );
+        return;
+      } on FirebaseException catch (e) {
+        if (e.code != 'permission-denied') {
+          dev.log(
+            'auth warmup non-rule error: ${e.code} ${e.message}',
+            name: 'AuthController',
+          );
+          return;
+        }
+        dev.log(
+          'auth warmup attempt ${attempt + 1} denied; retrying',
+          name: 'AuthController',
+        );
+        if (attempt == maxAttempts - 1) {
+          dev.log(
+            'auth warmup gave up after $maxAttempts attempts — '
+            'check that firestore.rules is the latest deploy.',
+            name: 'AuthController',
+          );
+          return;
+        }
+        await Future<void>.delayed(baseDelay * (attempt + 1));
+      } catch (e) {
+        dev.log('auth warmup unexpected: $e', name: 'AuthController');
+        return;
+      }
+    }
   }
 
   /// Probe both collections to find which one owns this UID. Returns
@@ -110,6 +190,7 @@ class AuthController extends StateNotifier<AuthState> {
     );
     await res.user?.updateDisplayName(name);
     final uid = res.user!.uid;
+    await _waitForFirestoreAuth(uid);
     if (role == UserRole.clinician) {
       // Mirrors HearifyPro/Managers/FirebaseClinicianManager.swift L63-75.
       await FirebaseFirestore.instance
@@ -168,6 +249,7 @@ class AuthController extends StateNotifier<AuthState> {
       password: password,
     );
     final uid = res.user!.uid;
+    await _waitForFirestoreAuth(uid);
     final actualRole = await _detectRole(uid);
     if (actualRole != expectedRole) {
       // Wrong tab — sign the user back out and surface a clear error.

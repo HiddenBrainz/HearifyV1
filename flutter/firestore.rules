@@ -1,0 +1,114 @@
+rules_version = '2';
+
+// Hearify Firestore security rules.
+//
+// Deploy with:
+//   firebase deploy --only firestore:rules
+//
+// Schema overview:
+//   /patients/{uid}                       — patient profile (self only)
+//   /clinicians/{uid}                     — clinician profile w/ linkedPatients[]
+//   /linkingCodes/{6-digit-code}          — short-lived patient → clinician handshake
+//   /sessions/{auto-id}                   — per-session aggregates (clinical dashboard)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helpers ─────────────────────────────────────────────────────
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function clinicianHasPatient(patientUid) {
+      // True if /clinicians/{caller} exists and `linkedPatients` (a
+      // possibly-missing array on that doc) contains the patient uid.
+      // The `.get('linkedPatients', [])` form returns an empty list
+      // when the field is absent so a freshly-signed-up clinician
+      // (zero linked patients) doesn't fail with a null deref.
+      return signedIn()
+        && exists(/databases/$(database)/documents/clinicians/$(request.auth.uid))
+        && get(/databases/$(database)/documents/clinicians/$(request.auth.uid))
+            .data.get('linkedPatients', [])
+            .hasAny([patientUid]);
+    }
+
+    // ── patient profile docs ────────────────────────────────────────
+    match /patients/{uid} {
+      // Patient owns their own doc; clinicians who have linked them can
+      // read (but never write) the profile + the derived metrics.
+      allow read: if isSelf(uid) || clinicianHasPatient(uid);
+      allow create, update: if isSelf(uid);
+      allow delete: if false;
+    }
+
+    // ── clinician profile docs ──────────────────────────────────────
+    match /clinicians/{uid} {
+      // The clinician owns their doc — including the `linkedPatients`
+      // array. Patients whose UID is in `linkedPatients` may read the
+      // clinician's name/email so the patient app can show "Linked to
+      // Dr. So-and-so". The `.get('linkedPatients', [])` is null-safe
+      // so an early-state clinician doc without the field still works.
+      allow read: if isSelf(uid)
+        || (signedIn()
+            && resource.data.get('linkedPatients', [])
+                .hasAny([request.auth.uid]));
+      allow create, update: if isSelf(uid);
+      allow delete: if false;
+    }
+
+    // ── linking codes ───────────────────────────────────────────────
+    // Patient creates a code with their own UID; clinician reads + marks
+    // it consumed within 24h. Both sides allowed; mutual-trust is
+    // bounded by the short TTL.
+    match /linkingCodes/{code} {
+      allow read: if signedIn();
+
+      // CREATE: only the patient can write a code that points at their
+      // own UID, and the doc must start out unconsumed.
+      allow create: if signedIn()
+        && request.resource.data.patientUID == request.auth.uid
+        && request.resource.data.isUsed == false;
+
+      // UPDATE: a clinician consumes the code. They must mark it used
+      // and stamp themselves as the consumer.
+      allow update: if signedIn()
+        && request.resource.data.isUsed == true
+        && request.resource.data.clinicianUID == request.auth.uid
+        // The patient anchor on the doc can't be rewritten.
+        && request.resource.data.patientUID == resource.data.patientUID;
+
+      allow delete: if false;
+    }
+
+    // ── per-session aggregates (audiology dashboard) ────────────────
+    match /sessions/{sessionId} {
+      // Patient writes their own session at session-close; clinician
+      // who has linked the patient reads.
+      allow read: if signedIn()
+        && (resource.data.patientUID == request.auth.uid
+            || clinicianHasPatient(resource.data.patientUID));
+      allow create: if signedIn()
+        && request.resource.data.patientUID == request.auth.uid;
+      // Sessions are append-only — keeps the clinical record tamper-free.
+      allow update, delete: if false;
+
+      // Tier 2: per-attempt drill-down. One doc per stimulus inside a
+      // session. The `patientUID` is denormalized onto each attempt
+      // doc so the rule check doesn't have to load the parent session
+      // doc on every read (which would add a get() per attempt for an
+      // audiologist scrolling through 30 items).
+      match /attempts/{attemptId} {
+        allow read: if signedIn()
+          && (resource.data.patientUID == request.auth.uid
+              || clinicianHasPatient(resource.data.patientUID));
+        allow create: if signedIn()
+          && request.resource.data.patientUID == request.auth.uid;
+        // Attempts are append-only too. The session aggregate is the
+        // source of truth for clinical scoring; raw attempts are the
+        // immutable evidence trail.
+        allow update, delete: if false;
+      }
+    }
+  }
+}

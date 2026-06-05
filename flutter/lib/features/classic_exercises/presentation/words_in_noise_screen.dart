@@ -10,7 +10,9 @@ import '../../../core/theme/auth_design_system.dart';
 import '../../../services/audio_service.dart';
 import '../../../services/speech_recognition_service.dart';
 import '../../../shared/data/practice_history.dart';
+import '../../../shared/data/phonetic_taxonomy.dart';
 import '../../../shared/widgets/modern_card.dart';
+import '../../clinician/data/session_writer.dart';
 import '../data/exercise_repository.dart';
 import '../domain/classic_exercise.dart';
 
@@ -43,6 +45,10 @@ class _WordsInNoiseScreenState extends ConsumerState<WordsInNoiseScreen> {
   bool _lastPassed = false;
   String? _loadError;
   Timer? _autoAdvance;
+
+  // Per-session attempts captured for the clinical-dashboard aggregate.
+  final List<PracticeAttempt> _sessionAttempts = [];
+  DateTime _sessionStart = DateTime.now();
 
   @override
   void initState() {
@@ -96,6 +102,7 @@ class _WordsInNoiseScreenState extends ConsumerState<WordsInNoiseScreen> {
       _session = groups[pickedList]!;
       _loading = false;
     });
+    _sessionStart = DateTime.now();
     unawaited(_setNoiseForCurrent());
     unawaited(_playCurrent());
   }
@@ -147,14 +154,17 @@ class _WordsInNoiseScreenState extends ConsumerState<WordsInNoiseScreen> {
       _lastPassed = passed;
       if (passed) _correct++;
     });
-    ref.read(practiceHistoryProvider.notifier).add(
-          PracticeAttempt(
-            target: c.word,
-            heard: heard,
-            score: sim,
-            timestamp: DateTime.now(),
-          ),
-        );
+    final attempt = PracticeAttempt(
+      target: c.word,
+      heard: heard,
+      score: sim,
+      timestamp: DateTime.now(),
+      exerciseType: ExerciseType.wordsInNoise,
+      categoryTag: PhoneticCategory.wordNoise,
+      snrDb: c.snrDb.toDouble(),
+    );
+    _sessionAttempts.add(attempt);
+    ref.read(practiceHistoryProvider.notifier).add(attempt);
     _autoAdvance?.cancel();
     _autoAdvance = Timer(const Duration(milliseconds: 900), () {
       if (!mounted) return;
@@ -188,6 +198,8 @@ class _WordsInNoiseScreenState extends ConsumerState<WordsInNoiseScreen> {
     final groups =
         await ref.read(exerciseRepositoryProvider).loadWinByList();
     if (!mounted) return;
+    _sessionAttempts.clear();
+    _sessionStart = DateTime.now();
     setState(() {
       _listId = pick;
       _session = groups[pick] ?? const [];
@@ -231,8 +243,16 @@ class _WordsInNoiseScreenState extends ConsumerState<WordsInNoiseScreen> {
     await ref.read(audioServiceProvider).stop();
     await ref.read(audioServiceProvider).stopBackgroundNoise();
     await ref.read(sttServiceProvider).cancel();
-    if (!mounted) return;
     final snr50 = _snr50K - _correct;
+    unawaited(
+      ref.read(sessionWriterProvider).writeSession(
+            exerciseType: ExerciseType.wordsInNoise,
+            attempts: List<PracticeAttempt>.unmodifiable(_sessionAttempts),
+            duration: DateTime.now().difference(_sessionStart),
+            snr50: snr50,
+          ),
+    );
+    if (!mounted) return;
     final b = Theme.of(context).brightness;
     final pct = _session.isEmpty ? 0.0 : _correct / _session.length;
     final action = await showDialog<_SummaryAction>(

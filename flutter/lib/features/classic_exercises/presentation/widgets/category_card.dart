@@ -48,27 +48,30 @@ class CategoryCard extends StatelessWidget {
           splashColor: accent.withValues(alpha: 0.14),
           highlightColor: accent.withValues(alpha: 0.08),
           onTap: onTap,
+          // No FittedBox — it gave the inner Text unbounded width so a
+          // long label like "Sentence Comprehension" rendered on one
+          // very-wide line and got scaled DOWN to fit, while shorter
+          // labels rendered at full size. The result was inconsistent
+          // typography across the six cards. Letting the Column lay
+          // out within the cell's bounded width forces the long label
+          // to wrap to two lines at the same font size as everyone
+          // else.
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.l),
-            // FittedBox absorbs overflow when the cell shrinks on small
-            // phones — the icon + label scale down together instead of
-            // tripping a RenderFlex overflow assertion.
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(category.icon, size: 44, color: accent),
-                  const SizedBox(height: AppSpacing.m),
-                  Text(
-                    category.displayName,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.ctaLabel,
-                  ),
-                ],
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(category.icon, size: 40, color: accent),
+                const SizedBox(height: AppSpacing.s),
+                Text(
+                  category.displayName,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.ctaLabel.copyWith(fontSize: 15),
+                ),
+              ],
             ),
           ),
         ),

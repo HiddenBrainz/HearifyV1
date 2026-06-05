@@ -1,1 +1,25 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"hearify-1c669","appId":"1:443808602359:android:58171c42b10a3262665bf2","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"hearify-1c669","configurations":{"android":"1:443808602359:android:58171c42b10a3262665bf2","web":"1:443808602359:web:c480169431f2fdd5665bf2"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "hearify-1c669",
+          "appId": "1:443808602359:android:58171c42b10a3262665bf2",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "hearify-1c669",
+          "configurations": {
+            "android": "1:443808602359:android:58171c42b10a3262665bf2",
+            "web": "1:443808602359:web:c480169431f2fdd5665bf2"
+          }
+        }
+      }
+    }
+  }
+}

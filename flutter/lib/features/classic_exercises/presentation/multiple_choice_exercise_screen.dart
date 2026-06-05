@@ -8,6 +8,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../services/audio_service.dart';
 import '../../../shared/widgets/modern_card.dart';
 import '../../../shared/data/practice_history.dart';
+import '../../../shared/data/phonetic_taxonomy.dart';
+import '../../clinician/data/session_writer.dart';
 import '../domain/classic_exercise.dart';
 import '../domain/session_config.dart';
 
@@ -49,6 +51,13 @@ class _MultipleChoiceExerciseScreenState
   List<String> _shuffledChoices = const [];
   Timer? _autoAdvance;
 
+  // ── Clinical metrics capture ─────────────────────────────────────
+  // Track per-session attempts so we can ship a single Firestore
+  // aggregate at session close instead of writing per-item.
+  final List<PracticeAttempt> _sessionAttempts = [];
+  DateTime _sessionStart = DateTime.now();
+  DateTime? _promptFinishedAt;
+
   @override
   void initState() {
     super.initState();
@@ -81,6 +90,7 @@ class _MultipleChoiceExerciseScreenState
           .read(audioServiceProvider)
           .startBackgroundNoise(volume: widget.backgroundNoiseVolume!);
     }
+    _sessionStart = DateTime.now();
     _playCurrent();
   }
 
@@ -104,6 +114,10 @@ class _MultipleChoiceExerciseScreenState
     final c = _current;
     if (c == null) return;
     await ref.read(audioServiceProvider).speak(c.prompt);
+    // Time-to-respond is measured from the moment the prompt finishes
+    // playing (not from screen show), so we don't penalize patients
+    // for slow TTS.
+    _promptFinishedAt = DateTime.now();
   }
 
   void _pick(String choice) {
@@ -116,14 +130,21 @@ class _MultipleChoiceExerciseScreenState
       _revealed = true;
       if (isCorrect) _correct++;
     });
-    ref.read(practiceHistoryProvider.notifier).add(
-          PracticeAttempt(
-            target: c.correctAnswer,
-            heard: choice,
-            score: isCorrect ? 1 : 0,
-            timestamp: DateTime.now(),
-          ),
-        );
+    final responseTimeMs = _promptFinishedAt == null
+        ? null
+        : DateTime.now().difference(_promptFinishedAt!).inMilliseconds;
+    final attempt = PracticeAttempt(
+      target: c.correctAnswer,
+      heard: choice,
+      score: isCorrect ? 1 : 0,
+      timestamp: DateTime.now(),
+      exerciseType: classicExerciseExerciseType(widget.category),
+      categoryTag: classicExerciseCategoryTag(widget.category),
+      responseTimeMs: responseTimeMs,
+      wrongChoice: isCorrect ? null : choice,
+    );
+    _sessionAttempts.add(attempt);
+    ref.read(practiceHistoryProvider.notifier).add(attempt);
     if (isCorrect) {
       // Let the green check read for a beat, then move on automatically.
       _autoAdvance?.cancel();
@@ -151,6 +172,8 @@ class _MultipleChoiceExerciseScreenState
 
   void _startNewSession() {
     _autoAdvance?.cancel();
+    _sessionAttempts.clear();
+    _sessionStart = DateTime.now();
     setState(() {
       _session = _drawSession(_pool);
       _index = 0;
@@ -188,6 +211,17 @@ class _MultipleChoiceExerciseScreenState
   Future<void> _showSummary() async {
     await ref.read(audioServiceProvider).stop();
     await ref.read(audioServiceProvider).stopBackgroundNoise();
+    // Persist a per-session aggregate to Firestore for the audiologist
+    // dashboard. Fire-and-forget — failures are swallowed inside the
+    // writer so they never block the summary dialog.
+    unawaited(
+      ref.read(sessionWriterProvider).writeSession(
+            exerciseType: classicExerciseExerciseType(widget.category),
+            attempts: List<PracticeAttempt>.unmodifiable(_sessionAttempts),
+            duration: DateTime.now().difference(_sessionStart),
+            backgroundNoiseLevel: widget.backgroundNoiseVolume,
+          ),
+    );
     if (!mounted) return;
     final answered = _revealed ? _index + 1 : _index;
     final pct = answered == 0 ? 0.0 : _correct / answered;

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/auth_design_system.dart';
 import '../data/clinician_repository.dart';
+import 'widgets/clinical_metrics_panel.dart';
 
 /// Port of HearifyPro/Views/PatientDetailView.swift. Header, three
 /// metric cards (with improvement deltas), an accuracy-over-time line
@@ -101,12 +102,10 @@ class _DetailBody extends StatelessWidget {
         children: [
           _HeaderCard(profile: profile),
           const SizedBox(height: AppSpacing.xl),
-          const _SectionLabel('Current performance'),
-          const SizedBox(height: AppSpacing.m),
-          _MetricRow(profile: profile),
-          const SizedBox(height: AppSpacing.xl),
-          const _SectionLabel('Progress over time'),
-          const SizedBox(height: AppSpacing.m),
+          // The clinical-metrics panel replaces the previous single
+          // accuracy line. Five views layered top-down by clinical
+          // impact. Each view handles its own "no data yet" copy when
+          // the session list is short.
           sessions.when(
             loading: () => const _CardShell(
               child: SizedBox(
@@ -121,26 +120,32 @@ class _DetailBody extends StatelessWidget {
                     style: AppTextStyles.error),
               ),
             ),
-            data: (list) => _ProgressChartCard(sessions: list),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const _SectionLabel('Session history'),
-          const SizedBox(height: AppSpacing.m),
-          sessions.when(
-            loading: () => const _CardShell(
-              child: SizedBox(
-                height: 120,
-                child: Center(child: CircularProgressIndicator()),
-              ),
+            data: (list) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                EngagementStrip(sessions: list),
+                const SizedBox(height: AppSpacing.l),
+                Snr50TrendChart(sessions: list),
+                const SizedBox(height: AppSpacing.l),
+                InitialVsFinalCard(sessions: list),
+                const SizedBox(height: AppSpacing.l),
+                FeatureAccuracyHeatmap(sessions: list),
+                const SizedBox(height: AppSpacing.l),
+                TopConfusionsTable(sessions: list),
+                const SizedBox(height: AppSpacing.xl),
+                const _SectionLabel('Current performance'),
+                const SizedBox(height: AppSpacing.m),
+                _MetricRow(profile: profile),
+                const SizedBox(height: AppSpacing.xl),
+                const _SectionLabel('Accuracy over time'),
+                const SizedBox(height: AppSpacing.m),
+                _ProgressChartCard(sessions: list),
+                const SizedBox(height: AppSpacing.xl),
+                const _SectionLabel('Session history'),
+                const SizedBox(height: AppSpacing.m),
+                _SessionsList(sessions: list),
+              ],
             ),
-            error: (e, _) => _CardShell(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.l),
-                child: Text('Couldn\'t load sessions. $e',
-                    style: AppTextStyles.error),
-              ),
-            ),
-            data: (list) => _SessionsList(sessions: list),
           ),
         ],
       ),
@@ -754,56 +759,248 @@ class _SessionRow extends StatelessWidget {
             : AppTheme.error(b);
     return _CardShell(
       accent: color,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.l,
-          vertical: AppSpacing.m,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(AppRadii.input),
-              ),
-              child: Text(
-                '${(acc * 100).round()}%',
-                style: AppTextStyles.ctaLabel.copyWith(
-                  fontSize: 13,
-                  color: color,
-                ),
-              ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadii.button),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadii.button),
+          splashColor: color.withValues(alpha: 0.1),
+          onTap: () => _openDrillDown(context, session),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.l,
+              vertical: AppSpacing.m,
             ),
-            const SizedBox(width: AppSpacing.l),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    session.exerciseType,
-                    style: AppTextStyles.ctaLabel.copyWith(fontSize: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(AppRadii.input),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _sessionSubtitle(session),
-                    style: AppTextStyles.inputLabel.copyWith(
-                      color: AppColors.textSecondary,
+                  child: Text(
+                    '${(acc * 100).round()}%',
+                    style: AppTextStyles.ctaLabel.copyWith(
+                      fontSize: 13,
+                      color: color,
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(width: AppSpacing.l),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        session.exerciseType,
+                        style: AppTextStyles.ctaLabel.copyWith(fontSize: 14),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _sessionSubtitle(session),
+                        style: AppTextStyles.inputLabel.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  DateFormat('MMM d').format(session.sessionDate),
+                  style: AppTextStyles.inputLabel.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openDrillDown(BuildContext context, PatientSession s) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.authCardBase,
+      showDragHandle: true,
+      builder: (_) => _SessionDrillDownSheet(session: s),
+    );
+  }
+}
+
+/// Audiologist drill-down: every per-attempt detail logged for a
+/// single session. Lazy-loaded — Firestore reads only fire when the
+/// audiologist actually taps a session, so the dashboard stays cheap.
+class _SessionDrillDownSheet extends ConsumerWidget {
+  const _SessionDrillDownSheet({required this.session});
+  final PatientSession session;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final b = Theme.of(context).brightness;
+    final attempts = ref.watch(sessionAttemptsProvider(session.id));
+    final size = MediaQuery.of(context).size;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: size.height * 0.85),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.l,
+          0,
+          AppSpacing.l,
+          AppSpacing.l,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              session.exerciseType,
+              style: AppTextStyles.ctaLabel.copyWith(fontSize: 17),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${DateFormat('MMM d, h:mm a').format(session.sessionDate)}'
+              '   ·   ${(session.accuracy * 100).round()}%'
+              '   ·   ${session.itemsCorrect}/${session.itemsAttempted} correct'
+              '${session.snr50 != null ? "   ·   SNR-50 ${session.snr50!.toStringAsFixed(1)} dB" : ""}',
+              style: AppTextStyles.inputLabel.copyWith(
+                fontSize: 12,
+                color: AppColors.textSecondary,
               ),
             ),
-            Text(
-              DateFormat('MMM d').format(session.sessionDate),
-              style: AppTextStyles.inputLabel.copyWith(
-                color: AppColors.textSecondary,
+            const SizedBox(height: AppSpacing.l),
+            Flexible(
+              child: attempts.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Padding(
+                  padding: const EdgeInsets.all(AppSpacing.l),
+                  child: Text(
+                    "Couldn't load this session's attempts. $e",
+                    style: AppTextStyles.error,
+                  ),
+                ),
+                data: (list) {
+                  if (list.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.xl,
+                      ),
+                      child: Text(
+                        'No per-attempt detail logged for this session. '
+                        'Older sessions only have aggregate metrics.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.subtitle.copyWith(fontSize: 13),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: list.length,
+                    separatorBuilder: (_, _) => const Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: AppColors.hairline,
+                    ),
+                    itemBuilder: (_, i) =>
+                        _AttemptRow(attempt: list[i], brightness: b),
+                  );
+                },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AttemptRow extends StatelessWidget {
+  const _AttemptRow({required this.attempt, required this.brightness});
+  final PatientAttempt attempt;
+  final Brightness brightness;
+
+  @override
+  Widget build(BuildContext context) {
+    final correctColor = attempt.correct
+        ? AppTheme.success(brightness)
+        : AppTheme.error(brightness);
+    final detailParts = <String>[];
+    if (attempt.snrDb != null) {
+      detailParts.add('${attempt.snrDb!.toStringAsFixed(0)} dB SNR');
+    }
+    if (attempt.responseTimeMs != null) {
+      detailParts.add('${attempt.responseTimeMs} ms');
+    }
+    if (attempt.categoryTag != null) {
+      detailParts.add(attempt.categoryTag!);
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            alignment: Alignment.center,
+            child: Icon(
+              attempt.correct
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.cancel_outlined,
+              size: 18,
+              color: correctColor,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: AppTextStyles.ctaLabel.copyWith(fontSize: 14),
+                    children: [
+                      TextSpan(text: attempt.target),
+                      TextSpan(
+                        text: '   →   ',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      TextSpan(
+                        text:
+                            attempt.heard.isEmpty ? '(no response)' : attempt.heard,
+                        style: TextStyle(color: correctColor),
+                      ),
+                    ],
+                  ),
+                ),
+                if (detailParts.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    detailParts.join('  ·  '),
+                    style: AppTextStyles.inputLabel.copyWith(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

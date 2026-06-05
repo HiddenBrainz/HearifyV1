@@ -8,5 +8,20 @@
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
+	<!-- Network client — Firebase, Sherpa Kokoro model fetch on first
+	     launch, any HTTP API the app touches. The *server* flag above
+	     is what `flutter run` needs for hot-reload; *client* is what
+	     production code needs to make outbound requests. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Mic + on-device speech recognition for the open-set
+	     repeat-back exercises (Word Recognition L2/L3, Sentence
+	     Comprehension L3, Words-in-Noise, BKB-SIN, Custom Practice).
+	     Without these flags the macOS sandbox kills the process the
+	     instant SFSpeechRecognizer is touched, just like iOS TCC. -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+	<key>com.apple.security.personal-information.speech-recognition</key>
+	<true/>
 </dict>
 </plist>
